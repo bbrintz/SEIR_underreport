@@ -101,27 +101,7 @@ fit = tt$sample(data = dat, chains = 10,
                  iter_warmup = 1500,
                  iter_sampling = 1000, parallel_chains = 10)
 
-fit = tt$sample(data = dat, chains = 10,
-                 adapt_delta = 0.99,
-                 max_treedepth = 16,
-                 init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  p_raw = runif(1, .25,.75),
-                                  phi_p_raw = runif(1, .05,.5),
-                                  v=runif(1,.7,.85),
-                                  z=rnorm(TT,0,.25),
-                                  sigma = runif(1, .25, .75),
-                                  sigmap=runif(1, .25, .75),
-                                  sig_beta = runif(1, .25, .75),
-                                  i0 = rbeta(N_C, 0.01*50, 0.99*50),
-                                  #rho_si = runif(1, 0.0001, 0.005),
-                                  rho_ei = runif(1, 0.001, 0.1),
-                                  rho_ir = runif(1, 0.001, 0.1),
-                                  gamma = rbeta(N_C, 0.7 * 6, 0.3 * 6),
-                                  eta=runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
-                 iter_warmup = 1500,
-                 iter_sampling = 1500, parallel_chains = 10)#,
+
 
 #fit=readRDS("fit_utah_10.rds")
 
