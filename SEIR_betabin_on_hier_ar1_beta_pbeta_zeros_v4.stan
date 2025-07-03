@@ -121,10 +121,10 @@ model {
   rho_ir_raw ~ logistic(0,1);
   rho_ei_raw ~ logistic(0,1); 
   phi_p ~ gamma(10, .01); // concentration parameter for beta-binomial approximation
-  v_raw ~ normal(0,1); //logistic(0,1);
+  v_raw ~ normal(logit(0.9), 0.3);//normal(0,1); //logistic(0,1);
 
-  sigma ~ normal(0, 3); //gamma(1,.01);//
-  sig_beta ~ normal(0, 3); //gamma(1,.01);//normal(0, 5);
+  sigma ~ normal(0, .1); //gamma(1,.01);//
+  sig_beta ~ normal(0, .05); //gamma(1,.01);//normal(0, 5);
   i0_raw ~  logistic(0,1); 
   p_raw ~ logistic(0,1);
 
@@ -150,4 +150,3 @@ model {
     }
   }
 }
-

@@ -90,7 +90,7 @@ fit = tt$sample(data = dat, chains = 10,
                                   phi_p = runif(N_C, 10, 1000),
                                   v_raw=runif(1,.1,.25),
                                   z=rnorm(TT,0,.25),
-                                  sigma = runif(1, .25, .75),
+                                  sigma = runif(1, .05, .5),
                                   sig_beta = runif(1, .25, .75),
                                   i0_raw = runif(N_C,-3,-1),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
@@ -98,7 +98,7 @@ fit = tt$sample(data = dat, chains = 10,
                                   rho_ir_raw = runif(1, -0.1, 0.1),
                                   gamma_raw = runif(N_C, 0,.5),
                                   eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
-                 iter_warmup = 1500,
+                 iter_warmup = 1000,
                  iter_sampling = 1000, parallel_chains = 10)
 
 
@@ -172,7 +172,7 @@ mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0")), np = n
             off_diag_args = list(size = 0.75))
             #condition = pairs_condition(chains = list(c(2,3),c(1,4))))
 
-mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0","rho_ei","rho_ir","phi_p")), np = np_fit, pars = c("p","beta_mat[1,1]","phi_p[1]","gamma[1]","rho_ei","rho_ir"),
+mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0","rho_ei","rho_ir","phi_p")), np = np_fit, pars = c("beta_mat[1,1]","beta_mat[2,2]","phi_p[1]","phi","rho_ei","rho_ir"),
             off_diag_args = list(size = 0.75))
 
 #betas=fit$draws("beta_mat", format = "draws_array") |> posterior::as_draws_rvars()
@@ -361,3 +361,25 @@ exp(rnorm(1e6,0,1)) %>% hist(breaks=100,freq=FALSE)
 
 
 qplot(rgamma(1e6,shape=1,rate=.01))
+
+
+# assume you’ve already done:
+# tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v4.stan")
+# dat  <- (your data list)
+
+# 1) do a prior‐only run
+prior_fit <- tt$sample(
+  data          = dat,
+  chains        = 500,
+  iter_warmup   = 0,
+  iter_sampling = 1,
+  refresh       = 0,
+  fixed_param   = TRUE
+)
+
+
+
+# 2) extract the draws for beta_mat[1,1] and beta_mat[2,2]
+draws_df <- as_draws_df(prior_fit$draws())
+
+hist(draws_df$`beta_mat[1,2]`)
