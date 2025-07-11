@@ -21,7 +21,8 @@ parameters {
   real<lower=0> sig_beta;
   real p_raw;  // unconstrained
   //real phi_p_raw;  // concentration parameter for beta-binomial approximation
-  array[N_C] real<lower=0> phi_p; // concentration parameter for beta-binomial approximation
+  // array[N_C] real<lower=0> phi_p; // concentration parameter for beta-binomial approximation
+  real<lower=0> phi_p;
   //real<lower=0,upper=1> kappa;
   array[N_C] real i0_raw;  
   array[N_C] real eta_raw; // unconstrained
@@ -143,7 +144,7 @@ model {
         {
           real n_ii = pop_size[ct] * ei_t[i,ct];
           real mu_ii = p * n_ii;
-          real var_ii = n_ii * p * (1 - p) * (n_ii + phi_p[ct]) / (1 + phi_p[ct]); 
+          real var_ii = n_ii * p * (1 - p) * (n_ii + phi_p) / (1 + phi_p); 
           ii[i,ct] ~ normal(mu_ii, sqrt(var_ii));
         }
       }

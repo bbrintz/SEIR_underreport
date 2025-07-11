@@ -87,7 +87,7 @@ fit = tt$sample(data = dat, chains = 10,
                                   
                                   p_raw = runif(1, -.25,.25),
                                   #kappa = runif(1, 0,1),
-                                  phi_p = runif(N_C, 10, 1000),
+                                  phi_p = runif(1, 10, 1000),
                                   v_raw=runif(1,.1,.25),
                                   z=rnorm(TT,0,.25),
                                   sigma = runif(1, .05, .5),
@@ -163,7 +163,7 @@ fit$init() %>% purrr::map(~.$eta[1])
 write.csv(fit$summary(c("p","phi","sigma","sig_beta","rho_ei","rho_ir")) %>% as_tibble %>%
 select(-mad,-ess_bulk) %>% mutate_if(is.numeric,~round(.,3)),file="betabin_ests.csv")
 
-fit$summary(c("p","gamma","beta_mat","phi","sigma","eta","i0"))
+fit$summary(c("p","phi","sigma","sig_beta","phi_p","rho_ei","rho_ir"))
 fit$summary(c("phi_p"))
 
 np_fit <- nuts_params(fit)
@@ -172,7 +172,7 @@ mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0")), np = n
             off_diag_args = list(size = 0.75))
             #condition = pairs_condition(chains = list(c(2,3),c(1,4))))
 
-mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0","rho_ei","rho_ir","phi_p")), np = np_fit, pars = c("beta_mat[1,1]","beta_mat[2,2]","phi_p[1]","phi","rho_ei","rho_ir"),
+mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0","rho_ei","rho_ir","phi_p")), np = np_fit, pars = c("beta_mat[1,1]","beta_mat[2,2]","phi_p","phi","rho_ei","rho_ir"),
             off_diag_args = list(size = 0.75))
 
 #betas=fit$draws("beta_mat", format = "draws_array") |> posterior::as_draws_rvars()
