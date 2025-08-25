@@ -107,7 +107,7 @@ fit = tt$sample(data = dat, chains = 10,
 
 #new_csv=unlist(1:10 %>% purrr::map(~paste0("SEIR_betabin_hier_ar1_beta_zeros_v2-202502041329-",.,"-5031f7.csv")))
 #new_csv=unlist(1:10 %>% purrr::map(~paste0("SEIR_betabin_hier_ar1_beta_zeros_v2-202502121643-",.,"-2f66c5.csv")))
-new_csv1=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504291547-",.,"-bca347.csv")))
+new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
 #new_csv2=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504300918-",.,"-56a7f2.csv")))
 
 fit$diagnostic_summary()
@@ -296,7 +296,7 @@ group_by(n1) %>% summarize(value=mean(value)) %>% ungroup() %>% mutate(n1=as.num
 ggplot(aes(y=value,x=n1)) + geom_point()
 ggsave(utah_gamma_020325.png)
 
-z_t_d <- fit$draws("ei_t", format = "draws_array") |> posterior::as_draws_rvars()
+z_t_d <- fit1$draws("ei_t", format = "draws_array") |> posterior::as_draws_rvars()
 z_t_d <- z_t_d$ei_t
 qpt025 <- quantile(z_t_d,0.025)
 qpt975 <- quantile(z_t_d,0.975)
@@ -308,7 +308,7 @@ pop4=dat$pop_size
 rgamma(1e6,shape=10,rate=.01) %>% hist(breaks=100,freq=FALSE)
 exp(rnorm(1e6,0,1)) %>% hist(breaks=100,freq=FALSE)
 
-obs=rbind(data.frame(value="mean",sweep(mean(z_t_d)[-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")),
+obs=rbind(data.frame(value="mean",sweep(mean(z_t_d)[-1,],MARGIN = 2, STATS = pop_size, FUN = "*")),
 data.frame(value="lwr",sweep(qpt025[1,-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")),
 data.frame(value="upr",sweep(qpt975[1,-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")))
 
