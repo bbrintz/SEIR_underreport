@@ -44,7 +44,7 @@ dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(name
 dplyr::select(-date)
 d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v4.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v7.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
@@ -56,7 +56,14 @@ counties=c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
 #counties=c(1,2,3,8)
 N_C = length(counties)#ncol(d1)
 
+ii=as.matrix(d1)[,counties]
+
 first=apply(matrix(as.numeric(as.matrix(d1)[,counties]!=0),ncol=N_C),2,function(x) which(x==1)[1])
+last<- unlist(1:N_C %>% purrr::map(function(col) {
+  w <- which(ii[,col] == 0)
+  w=w[which(w>first[col])][1]-1
+  w=ifelse(is.na(w),TT-1,w)
+}))
 dat <- 
   list(
     ii = as.matrix(d1)[,counties],
@@ -65,6 +72,7 @@ dat <-
     pop_size = pop$Population_2020[counties],
     D=dist[counties,counties]/10,
     first=first,
+    last=last,
     min_first=min(first)
   )
 
@@ -80,26 +88,29 @@ set.seed(123)
 # First time point, I0 is EI so use I0 for detection thing
 fit = tt$sample(data = dat, chains = 10,
                  adapt_delta = 0.99,
-                 max_treedepth = 14,
+                 max_treedepth = 16,
                  init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  
+                                  #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
                                   p_raw = runif(1, -.25,.25),
                                   #kappa = runif(1, 0,1),
-                                  phi_p = runif(1, 10, 1000),
-                                  v_raw=runif(1,.1,.25),
+                                  #phi_p = runif(1, 100, 200),
+                                  v_raw=runif(1,1.5,2.5),
                                   z=rnorm(TT,0,.25),
-                                  sigma = runif(1, .05, .5),
-                                  sig_beta = runif(1, .25, .75),
+                                  mu_log_beta = rnorm(1, 0, .05),
+                                  sigma = runif(1, .1, .25),
+                                  sig_beta = runif(1, .05, .1),
+                                  log_phi_p = rnorm(1,log(50), 1),#runif(1, 5, 20),
                                   i0_raw = runif(N_C,-3,-1),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
                                   rho_ei_raw = runif(1, -0.1, 0.1),
                                   rho_ir_raw = runif(1, -0.1, 0.1),
                                   gamma_raw = runif(N_C, 0,.5),
                                   eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
-                 iter_warmup = 1000,
-                 iter_sampling = 1000, parallel_chains = 10)
+                 iter_warmup = 1500,
+                 iter_sampling = 1500, parallel_chains = 10,
+                 output_dir = paste0(getwd(),"/tst_folder_sig/"))
 
 
 
@@ -113,6 +124,11 @@ new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_b
 fit$diagnostic_summary()
 fit$summary("phi_p")
 fit$summary("p")
+
+np_fit <- nuts_params(fit)
+
+mcmc_pairs(fit$draws(c("p","mu_log_beta","log_sigma","log_sig_beta","rho_ei_raw")), np = np_fit, pars = c("p","mu_log_beta","log_sigma","log_sig_beta","rho_ei_raw"),
+                  off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
@@ -166,14 +182,7 @@ select(-mad,-ess_bulk) %>% mutate_if(is.numeric,~round(.,3)),file="betabin_ests.
 fit$summary(c("p","phi","sigma","sig_beta","phi_p","rho_ei","rho_ir"))
 fit$summary(c("phi_p"))
 
-np_fit <- nuts_params(fit)
-quartz()
-mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0")), np = np_fit, pars = c("p","beta_mat[1,1]","eta[1]","gamma[1]","i0[1]","i0[2]"),
-            off_diag_args = list(size = 0.75))
-            #condition = pairs_condition(chains = list(c(2,3),c(1,4))))
 
-mcmc_pairs(fit$draws(c("p","gamma","beta_mat","phi","sigma","eta","i0","rho_ei","rho_ir","phi_p")), np = np_fit, pars = c("beta_mat[1,1]","beta_mat[2,2]","phi_p","phi","rho_ei","rho_ir"),
-            off_diag_args = list(size = 0.75))
 
 #betas=fit$draws("beta_mat", format = "draws_array") |> posterior::as_draws_rvars()
 
