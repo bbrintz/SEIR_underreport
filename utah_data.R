@@ -44,7 +44,7 @@ dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(name
 dplyr::select(-date)
 d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v7.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v8.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
@@ -87,7 +87,7 @@ set.seed(123)
 # Calculate I0, but get rid of V_t at first time point 
 # First time point, I0 is EI so use I0 for detection thing
 fit = tt$sample(data = dat, chains = 10,
-                 adapt_delta = 0.99,
+                 adapt_delta = 0.95,
                  max_treedepth = 16,
                  init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
@@ -100,8 +100,7 @@ fit = tt$sample(data = dat, chains = 10,
                                   z=rnorm(TT,0,.25),
                                   mu_log_beta = rnorm(1, 0, .05),
                                   sigma = runif(1, .1, .25),
-                                  sig_beta = runif(1, .05, .1),
-                                  log_phi_p = rnorm(1,log(50), 1),#runif(1, 5, 20),
+                                  sig_beta = runif(1, .1,.25),
                                   i0_raw = runif(N_C,-3,-1),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
                                   rho_ei_raw = runif(1, -0.1, 0.1),
@@ -109,7 +108,7 @@ fit = tt$sample(data = dat, chains = 10,
                                   gamma_raw = runif(N_C, 0,.5),
                                   eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
                  iter_warmup = 1500,
-                 iter_sampling = 1500, parallel_chains = 10,
+                 iter_sampling = 1000, parallel_chains = 10,
                  output_dir = paste0(getwd(),"/tst_folder_sig/"))
 
 
@@ -121,20 +120,28 @@ fit = tt$sample(data = dat, chains = 10,
 new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
 #new_csv2=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504300918-",.,"-56a7f2.csv")))
 
+new_csv1=unlist(1:10 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v8-202510131149-",.,"-6a1619.csv")))
+
+
+
+
 fit$diagnostic_summary()
 fit$summary("phi_p")
 fit$summary("p")
 
 np_fit <- nuts_params(fit)
 
-mcmc_pairs(fit$draws(c("p","mu_log_beta","log_sigma","log_sig_beta","rho_ei_raw")), np = np_fit, pars = c("p","mu_log_beta","log_sigma","log_sig_beta","rho_ei_raw"),
+mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0")), np = np_fit, pars = c("p","phi","sigma","sig_beta","rho_ei","i0[1]"),
                   off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
 #fit <- read_cmdstan_csv(new_csv)
 fit1=as_cmdstan_fit(new_csv1)
-fit1
+
+sv=fit1$draws("beta_mat") %>% posterior::as_draws_rvars() 
+sv
+
 
 fit2=as_cmdstan_fit(new_csv2)
 
