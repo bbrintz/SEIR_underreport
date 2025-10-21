@@ -147,7 +147,7 @@ model {
   sig_beta ~ normal(0,.15); // normal(log(0.03), 0.5);
   log_phi_p    ~ normal(log(50),   1.0);
 
-  i0_raw ~  logistic(0,1); 
+  i0_raw ~ normal(-8, 0.5); 
   p_raw ~ logistic(0,1);
 
   gamma_raw  ~ logistic(0,1); 
