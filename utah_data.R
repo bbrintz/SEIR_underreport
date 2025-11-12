@@ -44,7 +44,7 @@ dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(name
 dplyr::select(-date)
 d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v8.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v9.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
@@ -66,6 +66,7 @@ last<- unlist(1:N_C %>% purrr::map(function(col) {
 }))
 dat <- 
   list(
+    t0 = min(first), 
     ii = as.matrix(d1)[,counties],
     TT = TT,
     N_C = N_C,
@@ -86,9 +87,9 @@ set.seed(123)
 # No e0 
 # Calculate I0, but get rid of V_t at first time point 
 # First time point, I0 is EI so use I0 for detection thing
-fit = tt$sample(data = dat, chains = 10,
-                 adapt_delta = 0.95,
-                 max_treedepth = 16,
+fit = tt$sample(data = dat, chains = 4,
+                 adapt_delta = 0.90,
+                 max_treedepth = 14,
                  init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
@@ -107,8 +108,8 @@ fit = tt$sample(data = dat, chains = 10,
                                   rho_ir_raw = runif(1, -0.1, 0.1),
                                   gamma_raw = runif(N_C, 0,.5),
                                   eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
-                 iter_warmup = 1500,
-                 iter_sampling = 1000, parallel_chains = 10,
+                 iter_warmup = 200,#1500,
+                 iter_sampling = 200, parallel_chains = 4,
                  output_dir = paste0(getwd(),"/tst_folder_sig/"))
 
 
@@ -117,7 +118,7 @@ fit = tt$sample(data = dat, chains = 10,
 
 #new_csv=unlist(1:10 %>% purrr::map(~paste0("SEIR_betabin_hier_ar1_beta_zeros_v2-202502041329-",.,"-5031f7.csv")))
 #new_csv=unlist(1:10 %>% purrr::map(~paste0("SEIR_betabin_hier_ar1_beta_zeros_v2-202502121643-",.,"-2f66c5.csv")))
-new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
+#new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
 #new_csv2=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504300918-",.,"-56a7f2.csv")))
 
 new_csv1=unlist(1:10 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v8-202510131149-",.,"-6a1619.csv")))
@@ -126,21 +127,22 @@ new_csv1=unlist(1:10 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hi
 
 
 fit$diagnostic_summary()
-fit$summary("phi_p")
 fit$summary("p")
 
 np_fit <- nuts_params(fit)
 
-mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0")), np = np_fit, pars = c("p","phi","sigma","sig_beta","rho_ei","i0[1]"),
+mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0","mu_log_beta")), np = np_fit, pars = c("p","phi","sigma","sig_beta","mu_log_beta"),
                   off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
 #fit <- read_cmdstan_csv(new_csv)
 fit1=as_cmdstan_fit(new_csv1)
+fit=fit1
+sv=fit$draws("beta_mat") %>% posterior::as_draws_rvars() 
+#sv=fit$draws("log_beta") %>% posterior::as_draws_rvars() 
 
-sv=fit1$draws("beta_mat") %>% posterior::as_draws_rvars() 
-sv
+sv$beta_mat[,c(1,2)]
 
 
 fit2=as_cmdstan_fit(new_csv2)
@@ -319,12 +321,8 @@ qpt975 <- quantile(z_t_d,0.975)
 
 pop4=dat$pop_size
 
- kappa=rbeta(1e6,1,1)
-(kappa/(1-kappa)) %>% hist(breaks=100,freq=FALSE)
-rgamma(1e6,shape=10,rate=.01) %>% hist(breaks=100,freq=FALSE)
-exp(rnorm(1e6,0,1)) %>% hist(breaks=100,freq=FALSE)
 
-obs=rbind(data.frame(value="mean",sweep(mean(z_t_d)[-1,],MARGIN = 2, STATS = pop_size, FUN = "*")),
+obs=rbind(data.frame(value="mean",sweep(mean(z_t_d)[-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")),
 data.frame(value="lwr",sweep(qpt025[1,-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")),
 data.frame(value="upr",sweep(qpt975[1,-1,],MARGIN = 2, STATS = dat$pop_size, FUN = "*")))
 
@@ -357,7 +355,7 @@ scale_x_continuous(breaks=seq(1, 29, by=1),labels=format(dts$Date,"%m/%d/%y")) +
 theme(axis.text.x = element_text(angle = 90, hjust = 0,size=8)) + 
 theme(legend.position="none")
 
-ggsave("utah_020325_bb_withpi_bb.png",width=12,height=8)
+ggsave("utah_102125_bb.png",width=12,height=8)
 
 write.csv(data.frame(mu, k, a, b), file="rbeta_params.csv")
 
