@@ -36,7 +36,6 @@ parameters {
   real<lower=0> sig_beta;
    
   real p_raw;  // unconstrained
-  real log_phi_p;    
   array[N_C] real i0_raw;  
   array[N_C] real eta_raw; // unconstrained
   array[N_C] real gamma_raw; // unconstrained
@@ -62,8 +61,6 @@ transformed parameters {
   //real<lower=0,upper=0> rho_ei;
   //real<lower=0,upper=0> rho_ir;
 
-  //real<lower=0> phi_p = kappa / (1 - kappa);
-  real<lower=0> phi_p    = exp(log_phi_p);
   real u_t_mean;
   real v = inv_logit(v_raw);
   real phi = 2 * v - 1;
@@ -145,9 +142,8 @@ model {
   mu_log_beta ~ normal(-2,2);
   sigma ~ normal(0,.15); // normal(log(.1), .5); //normal(0,.1);//
   sig_beta ~ normal(0,.15); // normal(log(0.03), 0.5);
-  log_phi_p    ~ normal(log(50),   1.0);
 
-  i0_raw ~ normal(-8, 0.5); 
+  i0_raw ~  logistic(0,1); 
   p_raw ~ logistic(0,1);
 
   gamma_raw  ~ logistic(0,1); 
@@ -165,7 +161,7 @@ model {
         {
           real n_ii = pop_size[ct] * ei_t[i,ct];
           real mu_ii = p * n_ii;
-          real var_ii = n_ii * p * (1 - p) * (n_ii + phi_p) / (1 + phi_p); 
+          real var_ii = n_ii * p * (1 - p);
           ii[i,ct] ~ normal(mu_ii, sqrt(var_ii));
         }
       }

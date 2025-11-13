@@ -44,7 +44,7 @@ dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(name
 dplyr::select(-date)
 d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v9.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
@@ -94,23 +94,27 @@ fit = tt$sample(data = dat, chains = 4,
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
+                                  raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
+                                  #log_phi_p = rnorm(1,4,1),
                                   p_raw = runif(1, -.25,.25),
                                   #kappa = runif(1, 0,1),
-                                  #phi_p = runif(1, 100, 200),
+                                  phi_p = runif(1, 100, 200),
                                   v_raw=runif(1,1.5,2.5),
-                                  z=rnorm(TT,0,.25),
+                                  z=rnorm(TT-min(first) + 1,0,.25),
                                   mu_log_beta = rnorm(1, 0, .05),
                                   sigma = runif(1, .1, .25),
                                   sig_beta = runif(1, .1,.25),
-                                  i0_raw = runif(N_C,-3,-1),#rbeta(N_C, 0.01*50, 0.99*50),
+                                  i0_raw = runif(N_C,-9,-7),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
                                   rho_ei_raw = runif(1, -0.1, 0.1),
                                   rho_ir_raw = runif(1, -0.1, 0.1),
                                   gamma_raw = runif(N_C, 0,.5),
                                   eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
-                 iter_warmup = 200,#1500,
-                 iter_sampling = 200, parallel_chains = 4,
-                 output_dir = paste0(getwd(),"/tst_folder_sig/"))
+                 iter_warmup = 500,#1500,
+                 iter_sampling = 500, parallel_chains = 4,
+                 output_dir = paste0(getwd(),"/tst_folder_sig/"),
+                 step_size=.0009
+                 )
 
 
 
@@ -131,7 +135,13 @@ fit$summary("p")
 
 np_fit <- nuts_params(fit)
 
-mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0","mu_log_beta")), np = np_fit, pars = c("p","phi","sigma","sig_beta","mu_log_beta"),
+np_fit %>% 
+  filter(Parameter == "stepsize__") %>%
+  mutate(stage = case_when(Iteration <= iter_warmup ~ "warmup", TRUE ~ "sampling")) %>%
+  group_by(Chain, stage) %>%
+  summarize(median_stepsize = median(Value), .groups="drop")
+
+mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0","mu_log_beta")), np = np_fit, pars = c("p","phi","sigma","sig_beta","mu_log_beta","i0[1]"),
                   off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
@@ -142,7 +152,7 @@ fit=fit1
 sv=fit$draws("beta_mat") %>% posterior::as_draws_rvars() 
 #sv=fit$draws("log_beta") %>% posterior::as_draws_rvars() 
 
-sv$beta_mat[,c(1,2)]
+sv$beta_mat[,c(1,2,3,4)]
 
 
 fit2=as_cmdstan_fit(new_csv2)
