@@ -25,6 +25,15 @@ library(tidyverse)
 library(cmdstanr)
 new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
 fit=as_cmdstan_fit(new_csv)
+
+mu_log_beta = fit$summary("mu_log_beta") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+sigma= fit$summary("sigma") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+eta = fit$summary("eta") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+gamma = fit$summary("gamma") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+phi = fit$summary("phi") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+rho_ei = fit$summary("rho_ei") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+rho_ir = fit$summary("rho_ir") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
+
 ```
 
 # Introduction
@@ -33,16 +42,12 @@ The Covid-19 pandemic highlighted the challenge of imperfect detection in diseas
 
 These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).
 
-Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space.  
-Several approaches exist to overcome this challenge.  
-Recent innovations include linear noise approximations [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018].  
-While all of the aforementioned work addresses the challenge, gaps remain.  
+Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space. Several approaches exist to overcome this challenge.  
+Recent innovations include linear noise approximations [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018]. While all of the aforementioned work addresses the challenge, gaps remain.  
 
 As Bayesians, we would like to build a rich stochastic model that incorporates geographic heterogeneity, under-reporting biases, and time-varying transmission dynamics, as well as efficiently sampling from the posterior for parameters of interest. This still remains a hurdle for these prior works. Our approach is to approximate the discrete dynamics with a continuous process, akin to the linear noise approximations but in discrete time, which obviates some of the computational issues with having to repeatedly solve an ODE. Because our approach is developed in Stan, we can apply principles of Bayesian model building, as outlined in [Bayesian workflow paper], and formulate a model that reaches a good tradeoff between verisimilitude and tractability.
 
 Covid-19's incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19's biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic [@yang2020modified]. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments [@hao2020reconstruction; @chitwood2022reconstructing].
-
-\textcolor{red}{Rob notes: relate our model to traditional ODE transmission modeling and discrete stochastic disease modeling}
 
 In this study, we devise a model, implemented using the No-U-Turn Sampler (NUTS), a variant of Hamiltonian Monte Carlo (HMC), that uses simple case counts reported at the health-district level in Utah to estimate the proportion of COVID-19 infections that are detected, i.e., the clinical detection rate. Our model introduces three novel methodological advantages:  
 (1) model estimation allows for different start times of infections across health-districts,  
@@ -107,9 +112,9 @@ We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal 
 
 # Results
 
-We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.155 (95% CrI: 0.142–0.171), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time. We observed heterogeneity across health districts in inferred transmission intensity and timing of epidemic growth, driven by differences in initial conditions and local transmission dynamics (district-level traces and diagnostics are provided in the Appendix). Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within acceptable range for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
+We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.155 (95% CrI: 0.142–0.171), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean ($B_{it}$) of `r paste0(mu_log_beta$mean, " (95% CrI: ",mu_log_beta$q5, "-", mu_log_beta$q95, ")")` and standard deviation ($\sigma$) of `r paste0(sigma$mean, " (95% CrI: ",sigma$q5, "-", sigma$q95, ")")`. In addition to AR(1) correlated ($\phi$=`r paste0(phi$mean, " (95% CrI: ",phi$q5, "-", phi$q95, ")")`) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between `r paste0(min(eta$mean))` and `r paste0(max(eta$mean))` and recovery rate between `r paste0(min(gamma$mean))` and `r paste0(max(gamma$mean))` between districts with beta-binomial overdispersion parameters of `r paste0(rho_ei$mean, " (95% CrI: ",rho_ei$q5, "-", rho_ei$q95, ")")` and `r paste0(rho_ir$mean, " (95% CrI: ",rho_ir$q5, "-", rho_ir$q95, ")")`, respectively.
 
-We fit the model on 30 weeks of Utah data using 4 chains, adapt delta 0.95, and max tree depth 14. There were no divergences and E-BFMI was within 0.1 of 1 for all chains. Step sizes ranged from 0.0007 to 0.0009.
+Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
 
 ::: {#fig-detection}
 
