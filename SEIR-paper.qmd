@@ -117,7 +117,7 @@ We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal 
 
 # Results
 
-We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.16 (95% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean ($B_{it}$) of `r paste0(mu_log_beta$mean, " (95% CrI: ",mu_log_beta$q5, "-", mu_log_beta$q95, ")")` and standard deviation ($\sigma$) of `r paste0(sigma$mean, " (95% CrI: ",sigma$q5, "-", sigma$q95, ")")`. In addition to AR(1) correlated ($\phi$=`r paste0(phi$mean, " (95% CrI: ",phi$q5, "-", phi$q95, ")")`) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between `r paste0(min(eta$mean))` and `r paste0(max(eta$mean))` and recovery rate between `r paste0(min(gamma$mean))` and `r paste0(max(gamma$mean))` between districts with beta-binomial overdispersion parameters of `r paste0(rho_ei$mean, " (95% CrI: ",rho_ei$q5, "-", rho_ei$q95, ")")` and `r paste0(rho_ir$mean, " (95% CrI: ",rho_ir$q5, "-", rho_ir$q95, ")")`, respectively.
+We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean ($B_{it}$) of `r paste0(mu_log_beta$mean, " (90% CrI: ",mu_log_beta$q5, "-", mu_log_beta$q95, ")")` and standard deviation ($\sigma$) of `r paste0(sigma$mean, " (90% CrI: ",sigma$q5, "-", sigma$q95, ")")`. In addition to AR(1) correlated ($\phi$=`r paste0(phi$mean, " (90% CrI: ",phi$q5, "-", phi$q95, ")")`) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between `r paste0(min(eta$mean))` and `r paste0(max(eta$mean))` and recovery rate between `r paste0(min(gamma$mean))` and `r paste0(max(gamma$mean))` between districts with beta-binomial overdispersion parameters of `r paste0(rho_ei$mean, " (90% CrI: ",rho_ei$q5, "-", rho_ei$q95, ")")` and `r paste0(rho_ir$mean, " (90% CrI: ",rho_ir$q5, "-", rho_ir$q95, ")")`, respectively.
 
 Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
 
@@ -129,7 +129,7 @@ Weekly observed cases reported (black) and model estimated cases (blue) for Utah
 :::
 
 ## Simulation Study
-We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit. @tbl-sim-results shows error metrics for key parameters across detection probabilities. Overall, the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery.
+We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.  Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery (@tbl-sim-results).
 
 
 ```{r, include=T,echo=F}
@@ -151,7 +151,7 @@ mutate(`Average Error`=paste0(round(`Average Error`,3), " (", round(perc*100,1),
 kable()
 ```
 
-
+sdfsdf
 
 # Appendix: Continuous Approximation of Discrete Transitions
 
