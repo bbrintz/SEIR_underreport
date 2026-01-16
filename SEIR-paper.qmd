@@ -153,13 +153,17 @@ mutate(`Average Error`=paste0(round(`Average Error`,3), " (", round(perc*100,1),
 kable(align=c("l","c","c","c"))
 ```
 
-We also report the divergences in model fit across 200 simulated datasets per detection probability (@tbl-div-results). On average, the model had low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. 
+While our case study model fit had no divergences, the simulation study had some divergences across detection probabilities (@tbl-div-results). On average, the there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. 
 
 ```{r, include=T,echo=F}
 #| label: tbl-div-results
 #| tbl-cap: "Summary of divergences across 200 simulations for each detection probability."
-#| tbl-colwidths: [15,10,10,10,10,10,10]
-rate_div %>%
+#| tbl-colwidths: [20,10,8,8,8,8,8]
+rate_div %>% 
+  mutate(p = case_when(
+  p==.15 ~ "Low (0.15)",
+  p==.50 ~ "Medium (0.50)",
+  p==.85 ~ "High (0.85)")) %>% 
   rename(`Detection Probability` = p, `Mean (SD)` = mean_div) %>%
   kable(align = c("l","r","r","r","r","r","r")) %>%
   add_header_above(c(" " = 2, "Percentile" = 5))
