@@ -25,6 +25,7 @@ library(tidyverse)
 library(cmdstanr)
 library(flextable)
 library(knitr)
+library(kableExtra)
 ### Primary results
 new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
 fit=as_cmdstan_fit(new_csv)
@@ -39,6 +40,7 @@ rho_ir = fit$summary("rho_ir") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q
 
 ### Simulation
 p_est=readRDS("p_estimates.rds")
+rate_div=readRDS("rate_div.rds")
 ```
 
 # Introduction
@@ -135,7 +137,7 @@ We used simulated data to assess model performance in recovering true parameters
 ```{r, include=T,echo=F}
 #| label: tbl-sim-results
 #| tbl-cap: "Simulation results for key parameters across detection probabilities."
-#| tbl-colwidths: [30,20,20,20]
+#| tbl-colwidths: [20,20,20,20]
 p_est %>% mutate(Value=round(Value,3)) %>% mutate(range=case_when(
   range=="1-200" ~ "Low (0.15)",
   range=="201-400" ~ "Medium (0.50)",
@@ -147,11 +149,24 @@ p_est %>% mutate(Value=round(Value,3)) %>% mutate(range=case_when(
 )) %>% pivot_wider(names_from=Key, values_from=Value) %>% ungroup() %>% 
 mutate(true=c(.15,.5,.85)) %>% mutate(perc=`Average Error`/true) %>% 
 mutate(`Average Error`=paste0(round(`Average Error`,3), " (", round(perc*100,1), "%)", sep="")) %>% select(-perc,-true) %>% rename(`Average Error (%)`=`Average Error`,
-`Simulated Detection Probability`=range) %>%
-kable()
+`Detection Probability`=range) %>%
+kable(align=c("l","c","c","c"))
 ```
 
-sdfsdf
+We also report the divergences in model fit across 200 simulated datasets per detection probability (@tbl-div-results). On average, the model had low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. 
+
+```{r, include=T,echo=F}
+#| label: tbl-div-results
+#| tbl-cap: "Summary of divergences across 200 simulations for each detection probability."
+#| tbl-colwidths: [15,10,10,10,10,10,10]
+rate_div %>%
+  rename(`Detection Probability` = p, `Mean (SD)` = mean_div) %>%
+  kable(align = c("l","r","r","r","r","r","r")) %>%
+  add_header_above(c(" " = 2, "Percentile" = 5))
+```
+
+# Discussion
+We developed a stochastic SEIR model using a continuous approximation to discrete transitions to estimate the clinical detection rate of Covid-19 in Utah health districts. Our model estimated a clinical detection rate of 16% (90% CrI: 14–17%), indicating substantial under-ascertainment during the study period. The hierarchical AR(1) structure on transmission rates effectively captured temporal changes and spatial heterogeneity across districts.
 
 # Appendix: Continuous Approximation of Discrete Transitions
 
