@@ -108,6 +108,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#simulation-study" id="toc-simulation-study" class="nav-link" data-scroll-target="#simulation-study"><span class="header-section-number">3.1</span> Simulation Study</a></li>
   </ul></li>
+  <li><a href="#appendix-continuous-approximation-of-discrete-transitions" id="toc-appendix-continuous-approximation-of-discrete-transitions" class="nav-link" data-scroll-target="#appendix-continuous-approximation-of-discrete-transitions"><span class="header-section-number">4</span> Appendix: Continuous Approximation of Discrete Transitions</a></li>
   </ul>
 </nav>
 </div>
@@ -243,13 +244,80 @@ Figure&nbsp;1: Weekly observed cases reported (black) and model estimated cases 
 </figcaption>
 </figure>
 </div>
-<section id="simulation-study" class="level2 unnumbered" data-number="3.1">
-
-
+<section id="simulation-study" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="simulation-study"><span class="header-section-number">3.1</span> Simulation Study</h2>
 </section>
 </section>
+<section id="appendix-continuous-approximation-of-discrete-transitions" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Appendix: Continuous Approximation of Discrete Transitions</h1>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}\left[\frac{SE_t}{N}\right] &amp;= s_{t-1} (1 - \exp(-\beta i_{t-1})), &amp; \quad \text{Var}\left(\frac{SE_t}{N}\right) &amp;= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}\left[\frac{EI_t}{N}\right] &amp;= e_{t-1} (1 - \exp(-\eta)), &amp; \quad \text{Var}\left(\frac{EI_t}{N}\right) &amp;= \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}\left[\frac{IR_t}{N}\right] &amp;= i_{t-1} (1 - e^{-\gamma}), &amp; \quad \text{Var}\left(\frac{IR_t}{N}\right) &amp;= \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Let <span class="math inline">\(se_t\)</span>, <span class="math inline">\(ei_t\)</span>, and <span class="math inline">\(ir_t\)</span> be random variables with bounds <span class="math inline">\([0, s_{t-1}]\)</span>, <span class="math inline">\([0, e_{t-1}]\)</span>, and <span class="math inline">\([0, i_{t-1}]\)</span>, respectively. We need to find <span class="math inline">\(u_t\)</span>, <span class="math inline">\(v_t\)</span>, and <span class="math inline">\(w_t\)</span> distributed on <span class="math inline">\([0, 1]\)</span> such that <span class="math inline">\(se_t = u_t s_{t-1}\)</span>, <span class="math inline">\(ei_t = v_t e_{t-1}\)</span>, and <span class="math inline">\(ir_t = i_{t-1} w_t\)</span> with the same mean and variance.</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}[s_{t-1} u_t] &amp;= s_{t-1} \mathbb{E}[u_t] = s_{t-1}(1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(s_{t-1} u_t) &amp;= s_{t-1}^2 \text{Var}(u_t) = \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[e_{t-1} v_t] &amp;= e_{t-1} \mathbb{E}[v_t] = e_{t-1}(1 - \exp(-\eta)) \\
+    \text{Var}(e_{t-1} v_t) &amp;= e_{t-1}^2 \text{Var}(v_t) = \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[i_{t-1} w_t] &amp;= i_{t-1} \mathbb{E}[w_t] = i_{t-1}(1 - e^{-\gamma}) \\
+    \text{Var}(i_{t-1} w_t) &amp;= i_{t-1}^2 \text{Var}(w_t) = \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Solving for <span class="math inline">\(\mathbb{E}[u_t]\)</span>, <span class="math inline">\(\text{Var}(u_t)\)</span>, <span class="math inline">\(\mathbb{E}[v_t]\)</span>, <span class="math inline">\(\text{Var}(v_t)\)</span>, <span class="math inline">\(\mathbb{E}[w_t]\)</span>, and <span class="math inline">\(\text{Var}(w_t)\)</span> implies</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}[u_t] &amp;= (1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(u_t) &amp;= \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[v_t] &amp;= (1 - \exp(-\eta)) \\
+    \text{Var}(v_t) &amp;= \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[w_t] &amp;= (1 - e^{-\gamma}) \\
+    \text{Var}(w_t) &amp;= \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>What we could do is to take <span class="math inline">\(\tilde{u}_t\)</span>, <span class="math inline">\(\tilde{v}_t\)</span>, <span class="math inline">\(\tilde{w}_t \sim \text{Normal}\)</span> and let <span class="math inline">\(u_t = \text{inv\_logit}(\tilde{u}_t)\)</span>, <span class="math inline">\(v_t = \text{inv\_logit}(\tilde{v}_t)\)</span>, and <span class="math inline">\(w_t = \text{inv\_logit}(\tilde{w}_t)\)</span>.</p>
+<p>The downside of this approach is that the expectation of the inverse logit of a normal does not have an analytic form, but we could approximate with the Delta method. Let</p>
+<p><span class="math display">\[
+\tilde{u}_t \sim \text{Normal}(\mu_u, \sigma^2_u), \tilde{v}_t \sim \text{Normal}(\mu_v, \sigma^2_v), \tilde{w}_t \sim \text{Normal}(\mu_w, \sigma^2_w).
+\]</span></p>
+<p>We need to find <span class="math inline">\(\mu_u\)</span>, <span class="math inline">\(\sigma^2_u\)</span>, <span class="math inline">\(\mu_v\)</span>, <span class="math inline">\(\sigma^2_v\)</span>, <span class="math inline">\(\mu_w\)</span>, <span class="math inline">\(\sigma^2_w\)</span> such that</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx (1 - \exp(-\beta i_{t-1})), &amp;\quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx (1 - \exp(-\eta)), \quad &amp; \text{Var}(\text{expit}(\tilde{v}_t)) \approx \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx (1 - e^{-\gamma}), \quad &amp; \text{Var}(\text{expit}(\tilde{w}_t)) \approx \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Using the delta method gives that</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx \text{expit}(\mu_u), &amp; \quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \sigma_u^2 (\text{expit}(\mu_u)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx \text{expit}(\mu_v), &amp; \quad \text{Var}(\text{expit}(\tilde{v}_t)) \approx \sigma_v^2 (\text{expit}(\mu_v)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx \text{expit}(\mu_w), &amp;\quad \text{Var}(\text{expit}(\tilde{w}_t)) \approx \sigma_w^2 (\text{expit}(\mu_w)^\prime)^2
+\end{aligned}
+\]</span></p>
+<p>This leads to the following parameters:</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mu_u &amp;= \text{logit}(1 - \exp(-\beta i_{t-1}))  \\
+    \sigma_u^2 &amp;= \frac{1}{s_{t-1} N} \frac{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1}))}{((1 - \text{expit}(\mu_u))\text{expit}(\mu_u))^2} \\
+    &amp;= \frac{1}{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) s_{t-1} N} \\
+    \mu_v &amp;= \text{logit}(1 - \exp(-\eta))  \\
+    \sigma_v^2 &amp;= \frac{1}{e_{t-1} N} \frac{\exp(-\eta)(1 - \exp(-\eta))}{((1 - \text{expit}(\mu_v))\text{expit}(\mu_v))^2} \\
+    &amp;= \frac{1}{\exp(-\eta)(1 - \exp(-\eta)) e_{t-1} N} \\
+    \mu_w &amp;= \text{logit}(1 - e^{-\gamma})  \\
+    \sigma_w^2 &amp;= \frac{1}{i_{t-1} N} \frac{e^{-\gamma}(1 - e^{-\gamma}))}{((1 - \text{expit}(\mu_w))\text{expit}(\mu_w))^2} \\
+    &amp;= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
+\end{aligned}
+\]</span></p>
 
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">3.1 Simulation Study</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-brintz2023spatially" class="csl-entry" role="listitem">
 Brintz, Ben J, Lisa Madsen, and Claudio Fuentes. 2023. <span>“A Spatially Explicit n-Mixture Model for the Estimation of Disease Prevalence.”</span> <em>Statistical Modelling</em> 23 (1): 31–52.
 </div>
