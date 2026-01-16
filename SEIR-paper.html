@@ -246,7 +246,56 @@ Figure&nbsp;1: Weekly observed cases reported (black) and model estimated cases 
 </div>
 <section id="simulation-study" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="simulation-study"><span class="header-section-number">3.1</span> Simulation Study</h2>
-<p>We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability (<span class="math inline">\(p=0.15, 0.50, 0.85\)</span>), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.</p>
+<p>We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability (<span class="math inline">\(p=0.15, 0.50, 0.85\)</span>), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit. <a href="#tbl-sim-results" class="quarto-xref">Table&nbsp;1</a> shows error metrics for key parameters across detection probabilities. Overall, the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery.</p>
+<div class="cell" data-tbl-colwidths="[30,20,20,20]">
+<div id="tbl-sim-results" class="cell quarto-float anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sim-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Simulation results for key parameters across detection probabilities.
+</figcaption>
+<div aria-describedby="tbl-sim-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<table class="cell table table-sm table-striped small">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Simulated Detection Probability</th>
+<th style="text-align: left;">Average Error (%)</th>
+<th style="text-align: right;">Coverage</th>
+<th style="text-align: right;">90% CrI Width</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Low (0.15)</td>
+<td style="text-align: left;">0.002 (1.3%)</td>
+<td style="text-align: right;">0.927</td>
+<td style="text-align: right;">0.008</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Medium (0.50)</td>
+<td style="text-align: left;">0.006 (1.2%)</td>
+<td style="text-align: right;">0.876</td>
+<td style="text-align: right;">0.026</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">High (0.85)</td>
+<td style="text-align: left;">0.01 (1.2%)</td>
+<td style="text-align: right;">0.778</td>
+<td style="text-align: right;">0.041</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</figure>
+</div>
+</div>
 </section>
 </section>
 <section id="appendix-continuous-approximation-of-discrete-transitions" class="level1" data-number="4">

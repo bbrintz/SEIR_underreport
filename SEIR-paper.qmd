@@ -23,6 +23,9 @@ bibliography: try.bib
 ```{r, include=FALSE,echo=F}
 library(tidyverse) 
 library(cmdstanr)
+library(flextable)
+library(knitr)
+### Primary results
 new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
 fit=as_cmdstan_fit(new_csv)
 
@@ -34,6 +37,8 @@ phi = fit$summary("phi") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")),
 rho_ei = fit$summary("rho_ei") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
 rho_ir = fit$summary("rho_ir") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
 
+### Simulation
+p_est=readRDS("p_estimates.rds")
 ```
 
 # Introduction
@@ -124,7 +129,29 @@ Weekly observed cases reported (black) and model estimated cases (blue) for Utah
 :::
 
 ## Simulation Study
-We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.
+We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit. @tbl-sim-results shows error metrics for key parameters across detection probabilities. Overall, the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery.
+
+
+```{r, include=T,echo=F}
+#| label: tbl-sim-results
+#| tbl-cap: "Simulation results for key parameters across detection probabilities."
+#| tbl-colwidths: [30,20,20,20]
+p_est %>% mutate(Value=round(Value,3)) %>% mutate(range=case_when(
+  range=="1-200" ~ "Low (0.15)",
+  range=="201-400" ~ "Medium (0.50)",
+  range=="401-600" ~ "High (0.85)"
+)) %>% mutate(Key = case_when(
+    Key=="p1" ~ "Average Error",
+    Key=="p2" ~ "Coverage",
+    Key=="p3" ~ "90% CrI Width"
+)) %>% pivot_wider(names_from=Key, values_from=Value) %>% ungroup() %>% 
+mutate(true=c(.15,.5,.85)) %>% mutate(perc=`Average Error`/true) %>% 
+mutate(`Average Error`=paste0(round(`Average Error`,3), " (", round(perc*100,1), "%)", sep="")) %>% select(-perc,-true) %>% rename(`Average Error (%)`=`Average Error`,
+`Simulated Detection Probability`=range) %>%
+kable()
+```
+
+
 
 # Appendix: Continuous Approximation of Discrete Transitions
 
