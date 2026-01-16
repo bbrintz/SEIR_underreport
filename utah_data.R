@@ -145,7 +145,7 @@ fit = tt$sample(data = dat, chains = 4,
 #new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
 #new_csv2=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504300918-",.,"-56a7f2.csv")))
 
-new_csv1=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
+new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
 
 
 
@@ -167,15 +167,17 @@ mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0","mu_log_beta")
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
 #fit <- read_cmdstan_csv(new_csv)
-fit1=as_cmdstan_fit(new_csv1)
-fit=fit1
+fit=as_cmdstan_fit(new_csv)
+
+fit_dat=fit$summary()
+fit_dat %>% filter(rhat %in% sort(rhat,decreasing=T)[1:10]) %>% arrange(desc(rhat))
+
 sv=fit$draws("beta_mat") %>% posterior::as_draws_rvars() 
 #sv=fit$draws("log_beta") %>% posterior::as_draws_rvars() 
 
 sv$beta_mat[,c(1,2,3,4)]
 
 
-fit2=as_cmdstan_fit(new_csv2)
 
 
 
@@ -280,7 +282,7 @@ fit$draws("log_beta") %>% as_tibble %>% gather(Key,Value) %>%
 quartz()
 betas %>% filter(n1 > (first[n2]+1),n1<30) %>% ggplot(aes(x=n1,y=Val,ymin=Low,ymax=High))  + geom_line() + geom_ribbon(alpha=.25) + facet_wrap(~n2,scales="free_y")
 ggsave("utah_beta_020325.png")
-fit$draws("p") %>% as_tibble %>% gather() %>% ggplot(aes(y=value,x=rep(1:1500,10),group=key,color=key)) + geom_line()
+fit$draws("p") %>% as_tibble %>% gather() %>% ggplot(aes(y=value,x=rep(1:500,4),group=key,color=key)) + geom_line()
 
 fit$draws("phi_p") %>% as_tibble %>% gather() %>% ggplot(aes(x=value,group=key,fill=key)) + geom_density(alpha=.25) + theme_bw() +
 scale_fill_viridis_d()

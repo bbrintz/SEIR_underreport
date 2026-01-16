@@ -1,0 +1,122 @@
+---
+title: "Estimating Covid-19 Dynamics and Clinical Detection Rate using an approximation to the discrete stochastic SEIR Model"
+author:
+  - name: Ben J Brintz
+    affiliation: "Division of Epidemiology, Department of Internal Medicine, University of Utah, Salt Lake City, USA"
+    corresponding: true
+  - name: Rob Trangucci
+    affiliation: "Department of Statistics, Oregon State University, Corvallis, Oregon, USA"
+  - name: Claudio Fuentes
+    affiliation: "Department of Statistics, Oregon State University, Corvallis, Oregon, USA"
+  - name: Lisa Madsen
+    affiliation: "Department of Statistics, Oregon State University, Corvallis, Oregon, USA"
+format:
+  html: 
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+bibliography: try.bib
+
+---
+
+```{r, include=FALSE,echo=F}
+library(tidyverse) 
+library(cmdstanr)
+new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
+fit=as_cmdstan_fit(new_csv)
+```
+
+# Introduction
+
+The Covid-19 pandemic highlighted the challenge of imperfect detection in disease surveillance. Case reports undercount true infections due to asymptomatic cases and lack of access to testing. As a result, typically only the sickest and those with access to care got tested for and diagnosed with Covid-19 early in the pandemic. Various approaches have been developed in order to estimate the Covid-19 clinical detection rate including seroprevalence studies [@taylor2023seroprevalence; @samore2021probability], multiplier models [@reese2021estimated], back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate [@deo2021new; @chitwood2022reconstructing].  
+
+These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).
+
+Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space.  
+Several approaches exist to overcome this challenge.  
+Recent innovations include linear noise approximations [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018].  
+While all of the aforementioned work addresses the challenge, gaps remain.  
+
+As Bayesians, we would like to build a rich stochastic model that incorporates geographic heterogeneity, under-reporting biases, and time-varying transmission dynamics, as well as efficiently sampling from the posterior for parameters of interest. This still remains a hurdle for these prior works. Our approach is to approximate the discrete dynamics with a continuous process, akin to the linear noise approximations but in discrete time, which obviates some of the computational issues with having to repeatedly solve an ODE. Because our approach is developed in Stan, we can apply principles of Bayesian model building, as outlined in [Bayesian workflow paper], and formulate a model that reaches a good tradeoff between verisimilitude and tractability.
+
+Covid-19's incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19's biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic [@yang2020modified]. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments [@hao2020reconstruction; @chitwood2022reconstructing].
+
+\textcolor{red}{Rob notes: relate our model to traditional ODE transmission modeling and discrete stochastic disease modeling}
+
+In this study, we devise a model, implemented using the No-U-Turn Sampler (NUTS), a variant of Hamiltonian Monte Carlo (HMC), that uses simple case counts reported at the health-district level in Utah to estimate the proportion of COVID-19 infections that are detected, i.e., the clinical detection rate. Our model introduces three novel methodological advantages:  
+(1) model estimation allows for different start times of infections across health-districts,  
+(2) allowing an estimable evolving transmission rate using a hierarchical AR(1) process and a time differing, and  
+(3) a novel computational solution to estimating beta-binomial distributed detection and dynamics in a discrete transmission model using a continuous approximation.
+
+# Methods
+
+We fit a stochastic model on weekly new case counts across 11 health districts in Utah based on the SEIR (Susceptible–Exposed–Infected–Removed) compartmental model used to simulate Covid-19 infections. Given the complexity of Covid-19 case report data due to shifting policy and safety precautions, our approach required flexibility in the dynamics between compartments over time and in space. Specifically, we fit a model which allowed the force of infection to change over time and for it and the rate of movement between E and I compartments and I and R compartments to differ between districts. Finally, our model does not assume that the dynamics in the SEIR compartmental model start at the same time as cases reported in Utah at the district level do not start in the same week.
+
+## Model Formulation
+
+We assume incident cases of Covid-19 follow a stochastic SEIR process with underreporting. Let $N_i$ be the total population at risk at time 1 for district $i$. Let $S_{it}$, $E_{it}$, $I_{it}$ denote susceptible, exposed, and infected populations. Let $SE_{it}$, $EI_{it}$, $IR_{it}$ be transitions. Each district has a first reporting time $f_i$.
+
+$$
+\begin{aligned}
+I_{if_i} &= c_{f_i},\\
+EI_{if_i} &= I_{if_i},\\
+S_{if_i} &= N_i - EI_{if_i}.
+\end{aligned}
+$$
+
+For $(t > f_i)$:
+
+$$
+\begin{aligned}
+SE_{it} &\sim \text{Binomial}\!\Bigl(S_{it-1},\,1 - \exp\!\bigl(-\tfrac{\beta_{it}I_{it-1}}{N}\bigr)\Bigr),\\
+EI_{it} &\sim \text{BetaBinomial}\!\bigl(E_{it-1},\,1 - \exp(-\eta_i),\rho_{EI}\bigr),\\
+IR_{it} &\sim \text{BetaBinomial}\!\bigl(I_{it-1},\,1 - \exp(-\gamma_i),\rho_{IR}\bigr),\\
+S_{it} &= S_{it-1} - SE_{it},\\
+E_{it} &=
+  \begin{cases}
+    SE_{it}, & t = f_i + 1,\\
+    E_{it-1} + SE_{it} - EI_{it}, & t > f_i + 1
+  \end{cases}\\
+I_{it} &= I_{it-1} + EI_{it} - IR_{it},\\
+ii_{it} &\sim \text{Binomial}\!\bigl(EI_{it},\,p\bigr).
+\end{aligned}
+$$
+
+We assume imperfect detection with constant detection probability \(p\). A supplemental model uses a beta-binomial observation process.
+
+Transmission follows:
+
+$$
+\begin{aligned}
+\log{\beta_{it}} &\sim \text{Normal}(B_{it}, \tau^2) \\
+B_{it} &= \phi B_{i,t-1} + \sigma \epsilon_{it}, \quad t>1
+\end{aligned}
+$$
+
+where $\epsilon_{it} \sim \text{Normal}(0,1)$.
+
+## Hamiltonian Monte Carlo Approximation
+
+Since NUTS requires gradients, discrete latent variables are approximated by continuous processes.
+
+First, binomial detection is approximated by Gaussian distributions [@brintz2018asymptotic; @brintz2023spatially].  
+Second, transitions are modeled on the proportion scale by dividing by $N_i$. Let lowercase letters denote proportions.
+
+We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix).
+
+# Results
+
+We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.155 (95% CrI: 0.142–0.171), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time. We observed heterogeneity across health districts in inferred transmission intensity and timing of epidemic growth, driven by differences in initial conditions and local transmission dynamics (district-level traces and diagnostics are provided in the Appendix). Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within acceptable range for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
+
+We fit the model on 30 weeks of Utah data using 4 chains, adapt delta 0.95, and max tree depth 14. There were no divergences and E-BFMI was within 0.1 of 1 for all chains. Step sizes ranged from 0.0007 to 0.0009.
+
+::: {#fig-detection}
+
+![](utah_120525_bb.png){width="100%"}
+
+Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
+:::
+
+## Simulation Study
+
