@@ -124,7 +124,7 @@ Weekly observed cases reported (black) and model estimated cases (blue) for Utah
 :::
 
 ## Simulation Study
-
+We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.
 
 # Appendix: Continuous Approximation of Discrete Transitions
 

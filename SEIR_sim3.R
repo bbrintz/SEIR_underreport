@@ -18,13 +18,11 @@ fiter=500#500#sample(1:1500,1)
 
 #counties=c(1,2,3,8)#c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
 
-fit=as_cmdstan_fit(paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202509052035-",chn,"-1d5eb8.csv"))
+fit=as_cmdstan_fit("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-1-3f135e.csv")
 
 
 #fit2=as_cmdstan_fit(paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508251617-",chn,"-b39fc5.csv"))
 
-
-fiter=fiter
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
 #fit <- read_cmdstan_csv(new_csv)
@@ -51,7 +49,8 @@ pop_size = pop$Population_2020[counties]
 #counties=c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
 #pop=read_csv("./data/utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
 #pop=pop$Population_2020[counties]#1e4*sample(5:N_C)#pop[counties,]
-if(iter %in% 1:100) {p=.15} else if (iter %in% 101:200) {p=.5} else {p=.85}
+#if(iter %in% 1:100) {p=.15} else if (iter %in% 101:200) {p=.5} else {p=.85}
+if(iter %in% 1:200) {p=.15} else if (iter %in% 201:400) {p=.5} else {p=.85}
 
 
 #fit$draws("p", format = "draws_matrix")[fiter]
@@ -88,7 +87,7 @@ I_0 <- round(i0*pop_size)#
 
 first=readRDS("first.rds")
 
-phi_p = as.numeric(fit$draws("phi_p", format = "draws_matrix")[fiter])#readRDS('phi_p.rds')#runif(N_C, min = 0.05, max = 0.5)
+#phi_p = as.numeric(fit$draws("phi_p", format = "draws_matrix")[fiter])#readRDS('phi_p.rds')#runif(N_C, min = 0.05, max = 0.5)
 
 S_0 <- pop_size - I_0
 R <- S <- I <- E <- matrix(0,TT, N_C)
@@ -126,7 +125,7 @@ for (ct in  1:N_C) {
 
 
 
-ii=matrix(rbetabinom(N_C*(TT-1),EI,p_detect,rho=1/(1+phi_p)),nrow=TT-1);ii
+ii=matrix(rbinom(N_C*(TT-1),EI,p_detect),nrow=TT-1);ii
 
 
 ii[is.na(ii)] <- 0
@@ -149,7 +148,7 @@ last<- unlist(1:N_C %>% purrr::map(function(col) {
 #}
 #saveRDS(ii,file="ii.rds")
 #ii=readRDS("ii.rds")
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10.stan")
 dat <- 
   list(
     ii = ii,#as.matrix(d1)[,counties],
@@ -162,19 +161,20 @@ dat <-
     min_first=min(first)
   )
 
-init=\() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
+init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  
+                                  #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
+                                  raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
+                                  #log_phi_p = rnorm(1,4,1),
                                   p_raw = runif(1, -.25,.25),
                                   #kappa = runif(1, 0,1),
-                                  phi_p = runif(1, 10, 1000),
-                                  v_raw=runif(1,.1,.25),
-                                  z=rnorm(TT,0,.25),
-                                  mu_log_beta = rnorm(1, 0, .25),
-                                  sigma = runif(1, .05, .5),
-                                  sig_beta = runif(1, .25, .75),
-                                  i0_raw = runif(N_C,-3,-1),#rbeta(N_C, 0.01*50, 0.99*50),
+                                  v_raw=runif(1,1.5,2.5),
+                                  z=rnorm(TT-min(first) + 1,0,.25),
+                                  mu_log_beta = rnorm(1, 0, .05),
+                                  sigma = runif(1, .1, .25),
+                                  sig_beta = runif(1, .1,.25),
+                                  i0_raw = runif(N_C,-9,-7),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
                                   rho_ei_raw = runif(1, -0.1, 0.1),
                                   rho_ir_raw = runif(1, -0.1, 0.1),
@@ -190,10 +190,24 @@ fit = tt$sample(data = dat, chains = 4,
                  max_treedepth = 16,
                  init = init,
                  iter_warmup = 1500,
-                 iter_sampling = 1000, parallel_chains = 4)#,
+                 iter_sampling = 500, parallel_chains = 4,
+                 step_size=.0009)#,
 
 
 diagn=fit$diagnostic_summary()
+
+
+# sv=fit$draws("log_beta") %>% posterior::as_draws_rvars() 
+# #sv=fit$draws("log_beta") %>% posterior::as_draws_rvars() 
+
+# sv$beta_mat[,c(1,2,3,4)]
+
+# np_fit <- nuts_params(fit)
+# png("tst_np.png")
+# mcmc_pairs(fit$draws(c("sigma","sig_beta","p","mu_log_beta","i0","rho_ei_raw","rho_ir_raw","phi")), np = np_fit, 
+#            pars = c("sigma","sig_beta","p","mu_log_beta","i0[1]","phi"),
+#             off_diag_args = list(size = 0.75))
+# dev.off()
 
 
 #  z_t_d <- fit$draws("ei_t", format = "draws_array") |> posterior::as_draws_rvars()
@@ -230,9 +244,9 @@ p2=between(p, fit$summary("p")$q5, fit$summary("p")$q95)
 p3=fit$summary("p")$q95 - fit$summary("p")$q5
 
 #Beta Performance
-beta1=apply(abs(matrix(fit$summary("beta_mat")$mean,nrow=TT) - beta),2,mean)
-beta2=apply(matrix(between(as.vector(beta),fit$summary("beta_mat")$q5, fit$summary("beta_mat")$q95),nrow=TT),2,mean)
-beta3=apply(matrix(fit$summary("beta_mat")$q95 - fit$summary("beta_mat")$q5,nrow=TT),2,mean)
+beta1=abs(matrix(fit$summary("beta_mat")$mean,nrow=TT) - beta)
+beta2=matrix(between(as.vector(beta),fit$summary("beta_mat")$q5, fit$summary("beta_mat")$q95),nrow=TT)
+beta3=matrix(fit$summary("beta_mat")$q95 - fit$summary("beta_mat")$q5,nrow=TT)
 
 # EI Performance
 EI1=unlist(1:N_C %>% purrr::map(function(x) mean(abs(matrix(fit$summary("ei_t")$mean,nrow=TT)[(first[x]):(last[x]),x] - (EI/pop_size[x])[(first[x]):(last[x]),x]))))
@@ -275,3 +289,7 @@ saveRDS(list(dat,diagn,init,p1,p2,p3,beta1,beta2,beta3,EI1,EI2,EI3,I1,I2,I3,fit$
 # mcmc_pairs(fit$draws(c("mu_log_beta", "phi", "sigma","sig_beta","p","beta_mat[1,1]")), np = np_fit, pars = c("mu_log_beta", "phi", "sigma","sig_beta","p","beta_mat[1,1]"),
 #             off_diag_args = list(size = 0.75))
 # dev.off()
+
+
+
+
