@@ -45,9 +45,7 @@ rate_div=readRDS("rate_div.rds")
 
 # Introduction
 
-The Covid-19 pandemic highlighted the challenge of imperfect detection in disease surveillance. Case reports undercount true infections due to asymptomatic cases and lack of access to testing. As a result, typically only the sickest and those with access to care got tested for and diagnosed with Covid-19 early in the pandemic. Various approaches have been developed in order to estimate the Covid-19 clinical detection rate including seroprevalence studies [@taylor2023seroprevalence; @samore2021probability], multiplier models [@reese2021estimated], back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate [@deo2021new; @chitwood2022reconstructing].  
-
-These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).
+The Covid-19 pandemic highlighted the challenge of imperfect detection in disease surveillance. Case reports undercount true infections due to asymptomatic cases and lack of access to testing. As a result, typically only the sickest and those with access to care got tested for and diagnosed with Covid-19 early in the pandemic. Various approaches have been developed in order to estimate the Covid-19 clinical detection rate including seroprevalence studies [@taylor2023seroprevalence; @samore2021probability], multiplier models [@reese2021estimated], back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate [@deo2021new; @chitwood2022reconstructing]. These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).
 
 Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space. Several approaches exist to overcome this challenge.  
 Recent innovations include linear noise approximations [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018]. While all of the aforementioned work addresses the challenge, gaps remain.  
@@ -58,8 +56,8 @@ Covid-19's incubation period, during which individuals are infected but not infe
 
 In this study, we devise a model, implemented using the No-U-Turn Sampler (NUTS), a variant of Hamiltonian Monte Carlo (HMC), that uses simple case counts reported at the health-district level in Utah to estimate the proportion of COVID-19 infections that are detected, i.e., the clinical detection rate. Our model introduces three novel methodological advantages:  
 (1) model estimation allows for different start times of infections across health-districts,  
-(2) allowing an estimable evolving transmission rate using a hierarchical AR(1) process and a time differing, and  
-(3) a novel computational solution to estimating beta-binomial distributed detection and dynamics in a discrete transmission model using a continuous approximation.
+(2) allowing an estimable time-evolving and country-specific transmission rate using a hierarchical AR(1) process , and  
+(3) a continuous approximation that enables gradient-based Bayesian inference of dynamics in a discrete-time stochastic SEIR with beta-binomial transitions.
 
 # Methods
 
