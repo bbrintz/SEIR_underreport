@@ -108,12 +108,14 @@ where $\epsilon_{it} \sim \text{Normal}(0,1)$.
 
 ## Hamiltonian Monte Carlo Approximation
 
-Since NUTS requires gradients, discrete latent variables are approximated by continuous processes.
+Since NUTS requires gradients, discrete latent variables are approximated by continuous processes. In the Stan implementation we replace the discrete Binomial and Beta-Binomial latent transitions with continuous transition proportions modeled on the logit scale as Normal random variables, and recover counts by multiplying those proportions by compartment sizes. Variances for the logit-normal approximations are matched to the Binomial/Beta-Binomial moments via the delta method. Observed case counts are modeled using a Gaussian approximation to the Binomial (implemented as `ii ~ normal(p * EI, sqrt(EI * p * (1 - p)))`).
 
 First, binomial detection is approximated by Gaussian distributions [@brintz2018asymptotic; @brintz2023spatially].  
 Second, transitions are modeled on the proportion scale by dividing by $N_i$. Let lowercase letters denote proportions.
 
-We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix).
+We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix). The AR(1) on `\log\beta` is initialized at its stationary distribution in Stan using
+$$\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1$$
+and the AR(1) coefficient is reparameterized as $\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1$ to constrain it to $(-1,1)$.
 
 # Results
 

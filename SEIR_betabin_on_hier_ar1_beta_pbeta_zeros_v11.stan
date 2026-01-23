@@ -112,17 +112,13 @@ log_beta[glob_beta_start] = mu_log_beta/(1-phi)
             u_t_mean = exponential_cdf(beta_mat[n - 1,ct] * i_t[n - 1, ct] | 1);
             u_t[n-1, ct] = inv_logit((u_t_logit_eta[n-1, ct]) * (sqrt((1 - rho_se) / (pop_size[ct] * s_t[n - 1, ct] * u_t_mean * (1 - u_t_mean)) + rho_se / (u_t_mean * (1 - u_t_mean)))) + logit(u_t_mean));
 
-            if ((n - 1) == first[ct]) {
-              // keep ei_t[first[ct], ct] = i0[ct] as seeded above
-            } else if (e_t[n-1, ct] > 0) {
-              v_t[n-1, ct] = inv_logit(
-                (v_t_logit_eta[n-1, ct]) *
-                (sqrt((1 - rho_ei) / (pop_size[ct] * fmax(e_t[n - 1, ct], 1e-9) * eta[ct] * (1 - eta[ct]))
-                               + rho_ei / (eta[ct] * (1 - eta[ct]))))
-                + logit(eta[ct])
-              );
+            // Safely compute v_t and ei_t only when the exposed compartment size is positive.
+            // Avoid testing floating-point arrays for exact equality to zero.
+            if (e_t[n - 1, ct] > 0) {
+              v_t[n-1, ct] = inv_logit((v_t_logit_eta[n-1, ct]) * (sqrt((1 - rho_ei) / (pop_size[ct] * e_t[n - 1, ct] * eta[ct] * (1 - eta[ct])) + rho_ei / (eta[ct] * (1 - eta[ct])))) + logit(eta[ct]));
               ei_t[n-1, ct] = v_t[n-1, ct] * e_t[n - 1, ct];
             } else {
+              // if there are no exposed individuals, the transition is 0 and proportion equals baseline
               v_t[n-1, ct] = eta[ct];
               ei_t[n-1, ct] = 0;
             }

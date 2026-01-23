@@ -226,10 +226,10 @@ B_{it} &amp;= \phi B_{i,t-1} + \sigma \epsilon_{it}, \quad t&gt;1
 </section>
 <section id="hamiltonian-monte-carlo-approximation" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="hamiltonian-monte-carlo-approximation"><span class="header-section-number">2.2</span> Hamiltonian Monte Carlo Approximation</h2>
-<p>Since NUTS requires gradients, discrete latent variables are approximated by continuous processes.</p>
+<p>Since NUTS requires gradients, discrete latent variables are approximated by continuous processes. In the Stan implementation we replace the discrete Binomial and Beta-Binomial latent transitions with continuous transition proportions modeled on the logit scale as Normal random variables, and recover counts by multiplying those proportions by compartment sizes. Variances for the logit-normal approximations are matched to the Binomial/Beta-Binomial moments via the delta method. Observed case counts are modeled using a Gaussian approximation to the Binomial (implemented as <code>ii ~ normal(p * EI, sqrt(EI * p * (1 - p)))</code>).</p>
 <p>First, binomial detection is approximated by Gaussian distributions <span class="citation" data-cites="brintz2018asymptotic brintz2023spatially">(<a href="#ref-brintz2018asymptotic" role="doc-biblioref">B. Brintz, Fuentes, and Madsen 2018</a>; <a href="#ref-brintz2023spatially" role="doc-biblioref">B. J. Brintz, Madsen, and Fuentes 2023</a>)</span>.<br>
 Second, transitions are modeled on the proportion scale by dividing by <span class="math inline">\(N_i\)</span>. Let lowercase letters denote proportions.</p>
-<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix).</p>
+<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix). The AR(1) on <code>\log\beta</code> is initialized at its stationary distribution in Stan using <span class="math display">\[\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1\]</span> and the AR(1) coefficient is reparameterized as <span class="math inline">\(\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1\)</span> to constrain it to <span class="math inline">\((-1,1)\)</span>.</p>
 </section>
 </section>
 <section id="results" class="level1" data-number="3">
