@@ -10,7 +10,7 @@ iter=as.numeric(commandArgs(T))
 #1,1000
 
 chn=2#2#as.numeric(commandArgs(T))
-fiter=sample(1:500,1)#500#500#sample(1:1500,1)
+fiter=500#500#sample(1:1500,1)
 
 #set.seed(123)
 #beta <- 1.05
@@ -31,13 +31,17 @@ fit=as_cmdstan_fit("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v
 N_C <- 11
 TT <- 30
 
+fiter=200
+
+
+
 
 rho_se = 0
-rho_ei = fit$draws("rho_ei", format = "draws_matrix")[fiter]
-rho_ir = fit$draws("rho_ir", format = "draws_matrix")[fiter]
-phi = fit$draws("phi", format = "draws_matrix")[fiter]
-sig_beta = fit$draws("sig_beta", format = "draws_matrix")[fiter]
-mu_log_beta = fit$draws("mu_log_beta", format = "draws_matrix")[fiter]
+rho_ei = fit$summary("rho_ei")$mean#fit$draws("rho_ei", format = "draws_matrix")[fiter]
+rho_ir = fit$summary("rho_ir")$mean#fit$draws("rho_ir", format = "draws_matrix")[fiter]
+phi = fit$summary("phi")$mean#fit$draws("phi", format = "draws_matrix")[fiter]
+sig_beta = fit$summary("sig_beta")$mean#fit$draws("sig_beta", format = "draws_matrix")[fiter]
+mu_log_beta = fit$summary("mu_log_beta")$mean#fit$draws("mu_log_beta", format = "draws_matrix")[fiter]
 #first=sample(3:8,N_C,replace=T);first
 
 #pop=read_csv("./data/utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
@@ -54,7 +58,8 @@ if(iter %in% 1:200) {p=.15} else if (iter %in% 201:400) {p=.5} else {p=.85}
 
 
 #fit$draws("p", format = "draws_matrix")[fiter]
-sigma = fit$draws("sigma", format = "draws_matrix")[fiter]
+sigma = fit$summary("sigma")$mean#fit$draws("sigma", format = "draws_matrix")[fiter]
+
 
 #log_beta <- numeric(TT-1)
 #log_beta[1] <- rnorm(1,0,sigma/sqrt(1-phi^2));log_beta[1]
@@ -132,50 +137,50 @@ ii[is.na(ii)] <- 0
 N_C=ncol(ii)
 #ii_save
 #ii=ii[,-c(8,11)] # remove counties with no data
-last<- unlist(1:N_C %>% purrr::map(function(col) {
-  w <- which(ii[,col] == 0)
-  w=w[which(w>first[col])][1]-1
-  w=ifelse(is.na(w),TT-1,w)
-}))
+#last<- unlist(1:N_C %>% purrr::map(function(col) {
+#  w <- which(ii[,col] == 0)
+#  w=w[which(w>first[col])][1]-1
+#  w=ifelse(is.na(w),TT-1,w)
+#}))
 
-#run_len <- 20      # <-- choose how many consecutive time points define the tail
-#case_cut <- 75    # <-- "less than 100 cases"
+run_len <- 20      # <-- choose how many consecutive time points define the tail
+case_cut <- 75    # <-- "less than 100 cases"
 
-# last <- purrr::map_int(1:N_C, function(col) {
+last <- purrr::map_int(1:N_C, function(col) {
 
-#   x <- ii[, col]
+  x <- ii[, col]
 
-#   # ---- existing rule: stop at first 0 after first[col] ----
-#   w0 <- which(x == 0)
-#   w0 <- w0[w0 > first[col]][1] - 1
-#   w0 <- ifelse(is.na(w0), TT - 1, w0)
+  # ---- existing rule: stop at first 0 after first[col] ----
+  w0 <- which(x == 0)
+  w0 <- w0[w0 > first[col]][1] - 1
+  w0 <- ifelse(is.na(w0), TT - 1, w0)
 
-#   # ---- NEW: only allow "low-run truncation" after the peak ----
-#   peak_idx <- which.max(x)   # first occurrence of the max
+  # ---- NEW: only allow "low-run truncation" after the peak ----
+  peak_idx <- which.max(x)   # first occurrence of the max
 
-#   # start searching AFTER the peak (and after first[col], if that matters)
-#   start_idx <- max(first[col], peak_idx) + 1
-#   end_idx   <- TT - 1
+  # start searching AFTER the peak (and after first[col], if that matters)
+  start_idx <- max(first[col], peak_idx) + 1
+  end_idx   <- TT - 1
 
-#   if (start_idx > end_idx) return(w0)
+  if (start_idx > end_idx) return(w0)
 
-#   low <- x[start_idx:end_idx] < case_cut
+  low <- x[start_idx:end_idx] < case_cut
 
-#   r <- rle(low)
-#   ends   <- cumsum(r$lengths)
-#   starts <- ends - r$lengths + 1
+  r <- rle(low)
+  ends   <- cumsum(r$lengths)
+  starts <- ends - r$lengths + 1
 
-#   hit <- which(r$values & r$lengths >= run_len)[1]
+  hit <- which(r$values & r$lengths >= run_len)[1]
 
-#   wlow <- if (is.na(hit)) {
-#     TT - 1
-#   } else {
-#     # truncate right before the low-run begins
-#     (start_idx + starts[hit] - 1) - 1
-#   }
+  wlow <- if (is.na(hit)) {
+    TT - 1
+  } else {
+    # truncate right before the low-run begins
+    (start_idx + starts[hit] - 1) - 1
+  }
 
-#   min(w0, wlow)
-# })
+  min(w0, wlow)
+})
 
 ii  %>% as_tibble() %>% mutate(x=1:(TT-1)) %>% gather(Key, Value,-x) %>%
 ggplot(aes(x=x, y=Value)) + geom_line() + facet_wrap(~Key,scales="free_y")
@@ -234,12 +239,11 @@ init=list(init(),init(),init(),init())
 
 
 fit = tt$sample(data = dat, chains = 4,
-                 adapt_delta = 0.90,
+                 adapt_delta = 0.95,
                  max_treedepth = 18,
                  init = init,
-                 iter_warmup = 500,
-                 iter_sampling = 100, parallel_chains = 4,
-                 output_dir = "/Users/u6020766/stan_output")#,
+                 iter_warmup = 200,
+                 iter_sampling = 200, parallel_chains = 4)#,
                  #step_size=.0009)#,
 
 
