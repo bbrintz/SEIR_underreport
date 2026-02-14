@@ -49,7 +49,10 @@ The Covid-19 pandemic highlighted the challenge of imperfect detection in diseas
 
 Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space. Several approaches exist to overcome this challenge.  
 Recent innovations include linear noise approximations or LNA [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018]. 
-Despite these innovations, there are limitations to each approach. The LNA approach approximates transition densities with a multivariate Gaussian that is appropriate 
+Despite these innovations, there are limitations to each approach.
+The LNA approach approximates increments of the stochastic-disease-compartment-model-counting with an exponentiated multivariate Gaussian; a limitation to this approach is that the trajectories don't necessarily adhere to the population limits, namely that cumulative infections must be less than or equal to the population size. 
+This issue may occur at the tail end of an epidemic.
+Ideally, approximate inference methods for stochastic compartment models would respect the natural constraints imposed by finitely-sized populations.
 
 As Bayesians, we would like to build a rich stochastic model that incorporates geographic heterogeneity, under-reporting biases, and time-varying transmission dynamics, as well as efficiently sampling from the posterior for parameters of interest. This still remains a hurdle for these prior works. Our approach is to approximate the discrete dynamics with a continuous process, akin to the linear noise approximations but in discrete time, which obviates some of the computational issues with having to repeatedly solve an ODE. Because our approach is developed in Stan, we can apply principles of Bayesian model building, as outlined in [Bayesian workflow paper], and formulate a model that reaches a good tradeoff between verisimilitude and tractability.
 
