@@ -43,6 +43,16 @@ p_est=readRDS("p_estimates.rds")
 rate_div=readRDS("rate_div.rds")
 ```
 
+# Notes
+Rob - Flesh out intro with information on SIR/SEIR models 
+
+Rob - change the way we introduce the model 
+
+Ben - update simulation results 
+
+Ben - Results re-organize so simulation is first and discuss parameters in case study relative to other studies 
+
+
 # Introduction
 
 The Covid-19 pandemic highlighted the challenge of imperfect detection in disease surveillance. Case reports undercount true infections due to asymptomatic cases and lack of access to testing. As a result, typically only the sickest and those with access to care got tested for and diagnosed with Covid-19 early in the pandemic. Various approaches have been developed in order to estimate the Covid-19 clinical detection rate including seroprevalence studies [@taylor2023seroprevalence; @samore2021probability], multiplier models [@reese2021estimated], back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate [@deo2021new; @chitwood2022reconstructing]. These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).
