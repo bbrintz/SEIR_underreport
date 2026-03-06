@@ -44,6 +44,10 @@ rate_div=readRDS("rate_div.rds")
 ```
 
 # Notes
+
+End of April for draft ready to submit to Biometrics...
+
+These are the first steps: 
 Rob - Flesh out intro with information on SIR/SEIR models 
 
 Rob - change the way we introduce the model 
