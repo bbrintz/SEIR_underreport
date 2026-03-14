@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.554">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -48,19 +48,21 @@ div.csl-indent {
 
 
 <script src="SEIR-paper_files/libs/clipboard/clipboard.min.js"></script>
-<script src="SEIR-paper_files/libs/quarto-html/quarto.js"></script>
+<script src="SEIR-paper_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="SEIR-paper_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="SEIR-paper_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="SEIR-paper_files/libs/quarto-html/popper.min.js"></script>
 <script src="SEIR-paper_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="SEIR-paper_files/libs/quarto-html/anchor.min.js"></script>
 <link href="SEIR-paper_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="SEIR-paper_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="SEIR-paper_files/libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="SEIR-paper_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="SEIR-paper_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="SEIR-paper_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="SEIR-paper_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="SEIR-paper_files/libs/kePrint-0.0.1/kePrint.js"></script>
 <link href="SEIR-paper_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
@@ -74,7 +76,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -92,7 +94,7 @@ window.Quarto = {
 
 </head>
 
-<body>
+<body class="quarto-light">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
@@ -184,15 +186,18 @@ window.Quarto = {
 </section>
 <section id="introduction" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Introduction</h1>
-<p>The Covid-19 pandemic highlighted the challenge of imperfect detection in disease surveillance. Case reports undercount true infections due to asymptomatic cases and lack of access to testing. As a result, typically only the sickest and those with access to care got tested for and diagnosed with Covid-19 early in the pandemic. Various approaches have been developed in order to estimate the Covid-19 clinical detection rate including seroprevalence studies <span class="citation" data-cites="taylor2023seroprevalence samore2021probability">(<a href="#ref-taylor2023seroprevalence" role="doc-biblioref">Taylor et al. 2023</a>; <a href="#ref-samore2021probability" role="doc-biblioref">Samore et al. 2021</a>)</span>, multiplier models <span class="citation" data-cites="reese2021estimated">(<a href="#ref-reese2021estimated" role="doc-biblioref">Reese et al. 2021</a>)</span>, back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate <span class="citation" data-cites="deo2021new chitwood2022reconstructing">(<a href="#ref-deo2021new" role="doc-biblioref">Deo and Grover 2021</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>. These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces (CITE needed).</p>
-<p>Despite the increased fidelity of stochastic transmission models, these models present computational challenges due to the fact that their discrete state space is only partially observed, necessitating marginalization over a high dimensional discrete space. Several approaches exist to overcome this challenge.<br>
-Recent innovations include linear noise approximations or LNA <span class="citation" data-cites="fintziLinearNoiseApproximation2022">(<a href="#ref-fintziLinearNoiseApproximation2022" role="doc-biblioref">Fintzi, Wakefield, and Minin 2022</a>)</span>, particle filtering and iterated filtering <span class="citation" data-cites="liInferenceSpatiotemporalDynamics2024">(<a href="#ref-liInferenceSpatiotemporalDynamics2024" role="doc-biblioref">Li et al. 2024</a>)</span>, Dirichlet distributed compartment models <span class="citation" data-cites="zhouSpatiotemporalEpidemiologicalPrediction2020">(<a href="#ref-zhouSpatiotemporalEpidemiologicalPrediction2020" role="doc-biblioref">Zhou et al. 2020</a>)</span>, and exact marginalization using Laplace Transformations <span class="citation" data-cites="hoDirectLikelihoodbasedInference2018">(<a href="#ref-hoDirectLikelihoodbasedInference2018" role="doc-biblioref">Ho, Crawford, and Suchard 2018</a>)</span>. Despite these innovations, there are limitations to each approach. The LNA approach approximates increments of the stochastic-disease-compartment-model-counting with an exponentiated multivariate Gaussian; a limitation to this approach is that the trajectories don’t necessarily adhere to the population limits, namely that cumulative infections must be less than or equal to the population size. This issue may occur at the tail end of an epidemic. Ideally, approximate inference methods for stochastic compartment models would respect the natural constraints imposed by finitely-sized populations.</p>
-<p>As Bayesians, we would like to build a rich stochastic model that incorporates geographic heterogeneity, under-reporting biases, and time-varying transmission dynamics, as well as efficiently sampling from the posterior for parameters of interest. This still remains a hurdle for these prior works. Our approach is to approximate the discrete dynamics with a continuous process, akin to the linear noise approximations but in discrete time, which obviates some of the computational issues with having to repeatedly solve an ODE. Because our approach is developed in Stan, we can apply principles of Bayesian model building, as outlined in [Bayesian workflow paper], and formulate a model that reaches a good tradeoff between verisimilitude and tractability.</p>
-<p>Covid-19’s incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19’s biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic <span class="citation" data-cites="yang2020modified">(<a href="#ref-yang2020modified" role="doc-biblioref">Yang et al. 2020</a>)</span>. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments <span class="citation" data-cites="hao2020reconstruction chitwood2022reconstructing">(<a href="#ref-hao2020reconstruction" role="doc-biblioref">Hao et al. 2020</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>.</p>
-<p>In this study, we devise a model, implemented using the No-U-Turn Sampler (NUTS), a variant of Hamiltonian Monte Carlo (HMC), that uses simple case counts reported at the health-district level in Utah to estimate the proportion of COVID-19 infections that are detected, i.e., the clinical detection rate. Our model introduces three novel methodological advantages:<br>
-(1) model estimation allows for different start times of infections across health-districts,<br>
-(2) allowing an estimable time-evolving and country-specific transmission rate using a hierarchical AR(1) process , and<br>
-(3) a continuous approximation that enables gradient-based Bayesian inference of dynamics in a discrete-time stochastic SEIR with beta-binomial transitions.</p>
+<p>Unobservable individual-level heterogeneity in contact patterns, susceptibility and propensity to get tested are hallmark characteristics of infectious disease transmission and case reporting <span class="citation" data-cites="lloydsmith">(<a href="#ref-lloydsmith" role="doc-biblioref">Lloyd-Smith et al. 2005</a>)</span> (need more here about heterogeneity in susceptiblity and reporting). Such unobservable heterogeneity suggests that models of population-level infectious disease transmission should incorporate stochastic elements in both the state and observation processes (maybe cite a paper about POMP here). At the same time, the COVID-19 pandemic recorded disease surveillance data stratified by date, county, age and sex, which putatively allowed for models to incorporate terms to learn the nuances of local-to-space-and-time transmission. Unfortunately, building such structure into stochastic transmission models is challenging due to the computational burden of integrating over latent discrete state spaces.</p>
+<p>Recent innovations in addressing the computational burden of fitting complex stochastic transmission models include linear noise approximations or LNA <span class="citation" data-cites="fintziLinearNoiseApproximation2022">(<a href="#ref-fintziLinearNoiseApproximation2022" role="doc-biblioref">Fintzi, Wakefield, and Minin 2022</a>)</span>, particle filtering and iterated filtering <span class="citation" data-cites="liInferenceSpatiotemporalDynamics2024">(<a href="#ref-liInferenceSpatiotemporalDynamics2024" role="doc-biblioref">Li et al. 2024</a>)</span>, Dirichlet distributed compartment models <span class="citation" data-cites="zhouSpatiotemporalEpidemiologicalPrediction2020">(<a href="#ref-zhouSpatiotemporalEpidemiologicalPrediction2020" role="doc-biblioref">Zhou et al. 2020</a>)</span>, and exact marginalization using Laplace Transformations <span class="citation" data-cites="hoDirectLikelihoodbasedInference2018">(<a href="#ref-hoDirectLikelihoodbasedInference2018" role="doc-biblioref">Ho, Crawford, and Suchard 2018</a>)</span>. Despite these innovations, there are limitations to each approach. The LNA approach approximates increments of a continuous-time stochastic-disease-compartment-model with an exponentiated multivariate Gaussian; a limitation to this approach is that the trajectories don’t necessarily adhere to the population limits, namely that cumulative infections must be less than or equal to the population size. This issue may occur at the tail end of an epidemic. Ideally, approximate inference methods for stochastic compartment models would respect the natural constraints imposed by finitely-sized populations.</p>
+<p>Under-ascertainment of disease cases in surveillance data further exacerbates these challenge as models must also contend with the complication of biased measurement error. Each so-called line-listing reported by a state health agency typically represents a symptomatic case of the disease of interest or an asymptomatic case that was identified in subsequent contact tracing. Under-counting may result from asymptomatic cases that go unreported or lack of access to testing, both of which led to deflated case counts during the COVID-19 pandemic. Thus, effective models for transmission dynamics must incorporate a factor to account for under-counting.</p>
+<p>Various approaches have been developed in order to estimate clinical detection rates in infectious disease data including seroprevalence studies <span class="citation" data-cites="taylor2023seroprevalence samore2021probability">(<a href="#ref-taylor2023seroprevalence" role="doc-biblioref">Taylor et al. 2023</a>; <a href="#ref-samore2021probability" role="doc-biblioref">Samore et al. 2021</a>)</span>, multiplier models <span class="citation" data-cites="reese2021estimated">(<a href="#ref-reese2021estimated" role="doc-biblioref">Reese et al. 2021</a>)</span>, back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and clinical detection rate <span class="citation" data-cites="deo2021new chitwood2022reconstructing">(<a href="#ref-deo2021new" role="doc-biblioref">Deo and Grover 2021</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>. These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces <span class="citation" data-cites="keeling2008modeling">(<a href="#ref-keeling2008modeling" role="doc-biblioref">Keeling and Rohani 2008</a>)</span>.</p>
+<p>We address both of these problems by developing a novel continuous stochastic approximation to a discrete-time stochastic compartment model. Our contribution is three-fold:</p>
+<ol type="1">
+<li><p>We allow for over-dispersed state transitions via beta-binomial random variables, while learning the extent of the over-dispersion.</p></li>
+<li><p>The model handles the complexity of recent surveillance data via geography-specific and time-varying transmission rate using a hierarchical AR(1) process, again with unknown hyperparameters.</p></li>
+<li><p>In order to make fitting these models feasible, we do Bayesian inference in order to take advantage of strong prior information on epidemiological parameters in the context of COVID-19.</p></li>
+</ol>
+<p>The continuous approximation allows tractable computation through the use of of modern Markov Chain Monte Carlo approaches like the adaptive Hamiltonian Monte Carlo algorithm implemented in <code>Stan</code>.</p>
+<p>In Section 2 we introduce our model and the continuous approximation of the discrete time stochastic process, while in Section 3 we investigate the finite sample operating characteristics via a simulation study under varying degrees of underreporting. Section 4 applies our model to COVID-19 data from the first year of the COVID-19 pandemic in Utah, and in Section 5 we discuss our contribution.</p>
 </section>
 <section id="methods" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Methods</h1>
@@ -243,9 +248,10 @@ Second, transitions are modeled on the proportion scale by dividing by <span cla
 </section>
 <section id="results" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Results</h1>
+<p>Covid-19’s incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19’s biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic <span class="citation" data-cites="yang2020modified">(<a href="#ref-yang2020modified" role="doc-biblioref">Yang et al. 2020</a>)</span>. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments <span class="citation" data-cites="hao2020reconstruction chitwood2022reconstructing">(<a href="#ref-hao2020reconstruction" role="doc-biblioref">Hao et al. 2020</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>.</p>
 <p>We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates show the effect of under-ascertainment on observed case counts (<a href="#fig-detection" class="quarto-xref">Figure&nbsp;1</a>). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean (<span class="math inline">\(B_{it}\)</span>) of 0.11 (90% CrI: -0.05-0.27) and standard deviation (<span class="math inline">\(\sigma\)</span>) of 0.54 (90% CrI: 0.43-0.66). In addition to AR(1) correlated (<span class="math inline">\(\phi\)</span>=0.81 (90% CrI: 0.72-0.88)) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between 0.26 and 0.87 and recovery rate between 0.2 and 0.68 between districts with beta-binomial overdispersion parameters of 0.01 (90% CrI: 0-0.01) and 0.77 (90% CrI: 0.43-0.98), respectively.</p>
 <p>Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.</p>
-<div id="fig-detection" class="quarto-figure quarto-figure-center quarto-float anchored">
+<div id="fig-detection" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="utah_120525_bb.png" class="img-fluid figure-img" style="width:100.0%">
@@ -259,14 +265,14 @@ Figure&nbsp;1: Weekly observed cases reported (black) and model estimated cases 
 <h2 data-number="4.1" class="anchored" data-anchor-id="simulation-study"><span class="header-section-number">4.1</span> Simulation Study</h2>
 <p>We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability (<span class="math inline">\(p=0.15, 0.50, 0.85\)</span>), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit. Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery (<a href="#tbl-sim-results" class="quarto-xref">Table&nbsp;1</a>).</p>
 <div class="cell" data-tbl-colwidths="[20,20,20,20]">
-<div id="tbl-sim-results" class="cell quarto-float anchored">
+<div id="tbl-sim-results" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[20,20,20,20]">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-sim-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;1: Simulation results for key parameters across detection probabilities.
 </figcaption>
 <div aria-describedby="tbl-sim-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<table class="cell table table-sm table-striped small">
+<table class="cell caption-top table table-sm table-striped small">
 <colgroup>
 <col style="width: 20%">
 <col style="width: 20%">
@@ -309,15 +315,14 @@ Table&nbsp;1: Simulation results for key parameters across detection probabiliti
 </div>
 <p>While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (<a href="#tbl-div-results" class="quarto-xref">Table&nbsp;2</a>). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities.</p>
 <div class="cell" data-tbl-colwidths="[20,10,8,8,8,8,8]">
-<div id="tbl-div-results" class="cell quarto-float anchored">
+<div id="tbl-div-results" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="[20,10,8,8,8,8,8]">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-div-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Table&nbsp;2: Summary of divergences across 200 simulations for each detection probability.
 </figcaption>
 <div aria-describedby="tbl-div-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div>
-<table class="do-not-create-environment cell table table-sm table-striped small" data-quarto-postprocess="true" data-tbl-colwidths="[20,10,8,8,8,8,8]">
+<table class="do-not-create-environment cell caption-top table table-sm table-striped small">
 <colgroup>
 <col style="width: 14%">
 <col style="width: 14%">
@@ -334,7 +339,7 @@ Table&nbsp;2: Summary of divergences across 200 simulations for each detection p
 Percentile
 </div></th>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th style="text-align: left;" data-quarto-table-cell-role="th">Detection Probability</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">Mean (SD)</th>
 <th style="text-align: right;" data-quarto-table-cell-role="th">2.5th</th>
@@ -374,9 +379,6 @@ Percentile
 </tr>
 </tbody>
 </table>
-
-
-</div>
 </div>
 </div>
 </figure>
@@ -483,8 +485,14 @@ Hao, Xingjie, Shanshan Cheng, Degang Wu, Tangchun Wu, Xihong Lin, and Chaolong W
 <div id="ref-hoDirectLikelihoodbasedInference2018" class="csl-entry" role="listitem">
 Ho, Lam Si Tung, Forrest W. Crawford, and Marc A. Suchard. 2018. <span>“Direct Likelihood-Based Inference for Discretely Observed Stochastic Compartmental Models of Infectious Disease.”</span> <em>The Annals of Applied Statistics</em> 12 (3). <a href="https://doi.org/10.1214/18-AOAS1141">https://doi.org/10.1214/18-AOAS1141</a>.
 </div>
+<div id="ref-keeling2008modeling" class="csl-entry" role="listitem">
+Keeling, Matt J, and Pejman Rohani. 2008. <em>Modeling Infectious Diseases in Humans and Animals</em>. Princeton university press.
+</div>
 <div id="ref-liInferenceSpatiotemporalDynamics2024" class="csl-entry" role="listitem">
 Li, Jifan, Edward L. Ionides, Aaron A. King, Mercedes Pascual, and Ning Ning. 2024. <span>“Inference on Spatiotemporal Dynamics for Coupled Biological Populations.”</span> <em>Journal of The Royal Society Interface</em> 21 (216): 20240217. <a href="https://doi.org/10.1098/rsif.2024.0217">https://doi.org/10.1098/rsif.2024.0217</a>.
+</div>
+<div id="ref-lloydsmith" class="csl-entry" role="listitem">
+Lloyd-Smith, J. O., S. J. Schreiber, P. E. Kopp, and W. M. Getz. 2005. <span>“Superspreading and the Effect of Individual Variation on Disease Emergence.”</span> <em>Nature</em> 438 (7066): 355–59. <a href="https://doi.org/10.1038/nature04153">https://doi.org/10.1038/nature04153</a>.
 </div>
 <div id="ref-reese2021estimated" class="csl-entry" role="listitem">
 Reese, Heather, A Danielle Iuliano, Neha N Patel, Shikha Garg, Lindsay Kim, Benjamin J Silk, Aron J Hall, Alicia Fry, and Carrie Reed. 2021. <span>“Estimated Incidence of Coronavirus Disease 2019 (COVID-19) Illness and Hospitalization—United States, February–September 2020.”</span> <em>Clinical Infectious Diseases</em> 72 (12): e1010–17.
@@ -504,43 +512,58 @@ Zhou, Yiwang, Lili Wang, Leyao Zhang, Lan Shi, Kangping Yang, Jie He, Bangyao Zh
 </div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
@@ -548,184 +571,184 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       }
       return codeEl.innerText;
     }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-    var mailtoRegex = new RegExp(/^mailto:/);
-      var filterRegex = new RegExp('/' + window.location.host + '/');
-    var isInternal = (href) => {
-        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-    }
-    // Inspect non-navigation links and adorn them if external
- 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
-    for (var i=0; i<links.length; i++) {
-      const link = links[i];
-      if (!isInternal(link.href)) {
-        // undo the damage that might have been done by quarto-nav.js in the case of
-        // links that we want to consider external
-        if (link.dataset.originalHref !== undefined) {
-          link.href = link.dataset.originalHref;
-        }
-      }
-    }
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      if (note) {
-        return note.innerHTML;
-      } else {
-        return "";
-      }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
     }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
-        return container.innerHTML
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -733,185 +756,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 </div> <!-- /content -->
 
 
