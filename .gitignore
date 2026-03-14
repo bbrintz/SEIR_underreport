@@ -1,2 +1,4 @@
 ignore/*.csv
 .DS_Store
+.Rhistory
+.Rproj.user/
