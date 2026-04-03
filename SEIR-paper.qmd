@@ -48,7 +48,7 @@ rate_div=readRDS("rate_div_v2.rds")
 
 Unobservable individual-level heterogeneity in contact patterns, susceptibility and propensity to get tested are hallmark characteristics of infectious disease transmission and case reporting [@lloydsmith] (need more here about heterogeneity in susceptiblity and reporting).
 Such unobservable heterogeneity suggests that models of population-level infectious disease transmission should incorporate stochastic elements in both the state and observation processes (maybe cite a paper about POMP here).
-At the same time, the COVID-19 pandemic recorded disease surveillance data stratified by date, county, age and sex, which putatively allowed for models to incorporate terms to learn the nuances of local-to-space-and-time transmission.
+At the same time, the COVID-19 pandemic recorded disease surveillance data stratified by date, county, age and sex, which putatively allowed for models to incorporate shared spatio-temporal and demographic heterogeneity in order to characterize the nuances of local transmission.
 Unfortunately, building such structure into stochastic transmission models is challenging due to the computational burden of integrating over latent discrete state spaces.
 
 Recent innovations in addressing the computational burden of fitting complex stochastic transmission models include linear noise approximations or LNA [@fintziLinearNoiseApproximation2022], particle filtering and iterated filtering [@liInferenceSpatiotemporalDynamics2024], Dirichlet distributed compartment models [@zhouSpatiotemporalEpidemiologicalPrediction2020], and exact marginalization using Laplace Transformations [@hoDirectLikelihoodbasedInference2018]. 
