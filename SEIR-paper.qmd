@@ -39,8 +39,8 @@ rho_ei = fit$summary("rho_ei") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q
 rho_ir = fit$summary("rho_ir") %>% as_tibble %>% mutate_at(vars(c("mean","q5","q95")), ~round(.,2))
 
 ### Simulation
-p_est=readRDS("p_estimates.rds")
-rate_div=readRDS("rate_div.rds")
+p_est=readRDS("p_estimates_v2.rds")
+rate_div=readRDS("rate_div_v2.rds")
 ```
 
 # Notes
@@ -175,16 +175,18 @@ We used simulated data to assess model performance in recovering true parameters
 #| tbl-colwidths: [20,20,20,20]
 p_est %>% mutate(Value=round(Value,3)) %>% mutate(range=case_when(
   range=="1-200" ~ "Low (0.15)",
-  range=="201-400" ~ "Medium (0.50)",
-  range=="401-600" ~ "High (0.85)"
+  range=="201-400" ~ "High (0.50)",
+  range=="401-600" ~ "High2 (0.85)",
+  range=="601-800" ~ "Medium (0.25)",
 )) %>% mutate(Key = case_when(
     Key=="p1" ~ "Average Error",
     Key=="p2" ~ "Coverage",
     Key=="p3" ~ "90% CrI Width"
 )) %>% pivot_wider(names_from=Key, values_from=Value) %>% ungroup() %>% 
-mutate(true=c(.15,.5,.85)) %>% mutate(perc=`Average Error`/true) %>% 
+mutate(true=c(.15,.25,.5,.85)) %>% mutate(perc=`Average Error`/true) %>% 
 mutate(`Average Error`=paste0(round(`Average Error`,3), " (", round(perc*100,1), "%)", sep="")) %>% select(-perc,-true) %>% rename(`Average Error (%)`=`Average Error`,
-`Detection Probability`=range) %>%
+`Detection Probability`=range) %>% filter(`Detection Probability` %in% c("Low (0.15)", "Medium (0.25)", "High (0.50)")) %>% mutate(`Detection Probability`=factor(`Detection Probability`, levels=c("Low (0.15)", "Medium (0.25)", "High (0.50)"))) %>%
+arrange(`Detection Probability`) %>%
 kable(align=c("l","c","c","c"))
 ```
 
@@ -197,9 +199,13 @@ While our case study model fit had no divergences, the simulation study had dive
 rate_div %>% 
   mutate(p = case_when(
   p==.15 ~ "Low (0.15)",
-  p==.50 ~ "Medium (0.50)",
-  p==.85 ~ "High (0.85)")) %>% 
+  p==.25 ~ "Medium (0.25)",
+  p==.50 ~ "High (0.50)",
+  p==.85 ~ "High2 (0.85)")) %>% 
   rename(`Detection Probability` = p, `Mean (SD)` = mean_div) %>%
+  filter(`Detection Probability` %in% c("Low (0.15)", "Medium (0.25)", "High (0.50)")) %>%
+  mutate(`Detection Probability`=factor(`Detection Probability`, levels=c("Low (0.15)", "Medium (0.25)", "High (0.50)"))) %>%
+  arrange(`Detection Probability`) %>%
   kable(align = c("l","r","r","r","r","r","r")) %>%
   add_header_above(c(" " = 2, "Percentile" = 5))
 ```
