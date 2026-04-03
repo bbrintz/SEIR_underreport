@@ -43,19 +43,6 @@ p_est=readRDS("p_estimates_v2.rds")
 rate_div=readRDS("rate_div_v2.rds")
 ```
 
-# Notes
-
-End of April for draft ready to submit to Biometrics...
-
-These are the first steps: 
-Rob - Flesh out intro with information on SIR/SEIR models 
-
-Rob - change the way we introduce the model 
-
-Ben - update simulation results 
-
-Ben - Results re-organize so simulation is first and discuss parameters in case study relative to other studies 
-
 
 # Introduction
 
@@ -150,23 +137,11 @@ We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal 
 $$\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1$$
 and the AR(1) coefficient is reparameterized as $\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1$ to constrain it to $(-1,1)$.
 
-# Results
 
-Covid-19's incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19's biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic [@yang2020modified]. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments [@hao2020reconstruction; @chitwood2022reconstructing].
 
-We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean ($B_{it}$) of `r paste0(mu_log_beta$mean, " (90% CrI: ",mu_log_beta$q5, "-", mu_log_beta$q95, ")")` and standard deviation ($\sigma$) of `r paste0(sigma$mean, " (90% CrI: ",sigma$q5, "-", sigma$q95, ")")`. In addition to AR(1) correlated ($\phi$=`r paste0(phi$mean, " (90% CrI: ",phi$q5, "-", phi$q95, ")")`) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between `r paste0(min(eta$mean))` and `r paste0(max(eta$mean))` and recovery rate between `r paste0(min(gamma$mean))` and `r paste0(max(gamma$mean))` between districts with beta-binomial overdispersion parameters of `r paste0(rho_ei$mean, " (90% CrI: ",rho_ei$q5, "-", rho_ei$q95, ")")` and `r paste0(rho_ir$mean, " (90% CrI: ",rho_ir$q5, "-", rho_ir$q95, ")")`, respectively.
+# Simulating Underreporting 
 
-Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
-
-::: {#fig-detection}
-
-![](utah_120525_bb.png){width="100%"}
-
-Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
-:::
-
-## Simulation Study
-We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.50, 0.85$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.  Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. As expected, higher detection probabilities led to improved parameter recovery (@tbl-sim-results).
+We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.25, 0.50$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.  Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. Higher detection probabilities led to worsened parameter recovery (@tbl-sim-results).
 
 
 ```{r, include=T,echo=F}
@@ -190,7 +165,7 @@ arrange(`Detection Probability`) %>%
 kable(align=c("l","c","c","c"))
 ```
 
-While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (@tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. 
+While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (@tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.
 
 ```{r, include=T,echo=F}
 #| label: tbl-div-results
@@ -210,6 +185,24 @@ rate_div %>%
   add_header_above(c(" " = 2, "Percentile" = 5))
 ```
 
+# Covid-19 Case Study using Utah Data 
+
+Covid-19's incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19's biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic [@yang2020modified]. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments [@hao2020reconstruction; @chitwood2022reconstructing].
+
+We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean clinical detection fraction was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates  show the effect of under-ascertainment on observed case counts (@fig-detection). 
+Our estimated clinical detection fraction of 16% (90% CrI: 14% to 17%) is consistent with other early-pandemic under-ascertainment estimates, though direct comparison requires caution because target populations, time periods, and estimands differ. In Utah, @havers2020seroprevalence estimated roughly 10.5 infections per reported case among adults statewide by early May 2020, implying a detection fraction near 9.5%, while @samore2021probability estimated a 40% detection fraction in four urban Utah counties during May-June 2020. Nationally, @chitwood2022reconstructing estimated a median state-level ascertainment of 13.2% during March-May 2020. Our estimate of 16% is in line with these estimates, though differences in time periods, geographic scope, and methods make direct comparisons difficult.
+
+The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean ($B_{it}$) of `r paste0(mu_log_beta$mean, " (90% CrI: ",mu_log_beta$q5, "-", mu_log_beta$q95, ")")` and standard deviation ($\sigma$) of `r paste0(sigma$mean, " (90% CrI: ",sigma$q5, "-", sigma$q95, ")")`. In addition to AR(1) correlated ($\phi$=`r paste0(phi$mean, " (90% CrI: ",phi$q5, "-", phi$q95, ")")`) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between `r paste0(min(eta$mean))` and `r paste0(max(eta$mean))` and recovery rate between `r paste0(min(gamma$mean))` and `r paste0(max(gamma$mean))` between districts with beta-binomial overdispersion parameters of `r paste0(rho_ei$mean, " (90% CrI: ",rho_ei$q5, "-", rho_ei$q95, ")")` and `r paste0(rho_ir$mean, " (90% CrI: ",rho_ir$q5, "-", rho_ir$q95, ")")`, respectively.
+
+Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.
+
+::: {#fig-detection}
+
+![](utah_120525_bb.png){width="100%"}
+
+Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
+:::
+
 # Discussion
 We developed a stochastic SEIR model using a continuous approximation to discrete transitions to estimate the clinical detection rate of Covid-19 in Utah health districts. Our model estimated a clinical detection rate of 16% (90% CrI: 14–17%), indicating substantial under-ascertainment during the study period. The hierarchical AR(1) structure on transmission rates effectively captured temporal changes and spatial heterogeneity across districts.
 
@@ -220,6 +213,20 @@ A classic trade-off in compartmental modeling is between model complexity and pa
 Our simulation study demonstrated the model's ability to recover true parameters across varying detection probabilities, with improved performance at higher detection rates. While the case study fit showed no divergences, the simulation study revealed low divergence rates, particularly at higher detection probabilities.
 
 The beta-binomial transitions between compartments allowed for overdispersion in the transition process, capturing heterogeneity in transmission dynamics which can avoid overly-confident inference and absorb mild misspecification of the transition process. The estimate for the overdispersion parameter from S to E was very close to 0, implies that the binomial model was sufficient for that transition and that time to infection from exposure was consistent across time, which aligns with clinical understanding of Covid-19 infection. The overdispersion parameters for E to I and I to R were higher, indicating more variability in those transitions.
+
+# Notes
+
+End of April for draft ready to submit to Biometrics...
+
+These are the first steps: 
+Rob - Flesh out intro with information on SIR/SEIR models 
+
+Rob - change the way we introduce the model 
+
+
+Ben - Results re-organize so simulation is first and discuss parameters in case study relative to other studies 
+
+
 
 # Appendix: Continuous Approximation of Discrete Transitions
 
