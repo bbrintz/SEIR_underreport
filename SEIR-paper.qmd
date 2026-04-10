@@ -133,7 +133,7 @@ Since NUTS requires gradients, discrete latent variables are approximated by con
 First, binomial detection is approximated by Gaussian distributions [@brintz2018asymptotic; @brintz2023spatially].  
 Second, transitions are modeled on the proportion scale by dividing by $N_i$. Let lowercase letters denote proportions.
 
-We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix). The AR(1) on `\log\beta` is initialized at its stationary distribution in Stan using
+We approximate $se_{it}, ei_{it}, ir_{it}$ with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix Section @sec-inverse-logit). The AR(1) on `\log\beta` is initialized at its stationary distribution in Stan using
 $$\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1$$
 and the AR(1) coefficient is reparameterized as $\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1$ to constrain it to $(-1,1)$.
 
@@ -141,7 +141,7 @@ and the AR(1) coefficient is reparameterized as $\phi = 2\,\text{inv\_logit}(v_{
 
 # Simulating Underreporting 
 
-We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability ($p=0.15, 0.25, 0.50$), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit.  Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. Higher detection probabilities led to worsened parameter recovery (@tbl-sim-results).
+We used simulated data to assess model performance in recovering true parameters and states. Our simulations mimicked the structure of the Utah health district data used in our case study. We simulated 30 weeks of data for 11 districts with known parameters. The known parameters were based on random draws from the Utah data model fit. However, we varied the ascertainment problability ($p=0.15, 0.25, 0.50$), simulating 200 observed case counts per setting, used true health district population data.  Across simulated ascertainment probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. Higher detection probabilities led to worsened parameter recovery (@tbl-sim-results).
 
 
 ```{r, include=T,echo=F}
@@ -165,25 +165,9 @@ arrange(`Detection Probability`) %>%
 kable(align=c("l","c","c","c"))
 ```
 
-While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (@tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.
+While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, @tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities . Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.
 
-```{r, include=T,echo=F}
-#| label: tbl-div-results
-#| tbl-cap: "Summary of divergences across 200 simulations for each detection probability."
-#| tbl-colwidths: [20,10,8,8,8,8,8]
-rate_div %>% 
-  mutate(p = case_when(
-  p==.15 ~ "Low (0.15)",
-  p==.25 ~ "Medium (0.25)",
-  p==.50 ~ "High (0.50)",
-  p==.85 ~ "High2 (0.85)")) %>% 
-  rename(`Detection Probability` = p, `Mean (SD)` = mean_div) %>%
-  filter(`Detection Probability` %in% c("Low (0.15)", "Medium (0.25)", "High (0.50)")) %>%
-  mutate(`Detection Probability`=factor(`Detection Probability`, levels=c("Low (0.15)", "Medium (0.25)", "High (0.50)"))) %>%
-  arrange(`Detection Probability`) %>%
-  kable(align = c("l","r","r","r","r","r","r")) %>%
-  add_header_above(c(" " = 2, "Percentile" = 5))
-```
+
 
 # Covid-19 Case Study using Utah Data 
 
@@ -228,9 +212,11 @@ Ben - Edit this part: Results re-organize so simulation is first and discuss par
 
 
 
-# Appendix: Continuous Approximation of Discrete Transitions
+# Appendix
 
-\section{Appendix: Inverse Logit calculation}
+## Continuous Approximation of Discrete Transitions
+
+### Inverse Logit Calculation {#sec-inverse-logit}
 $$
 \begin{aligned}
     \mathbb{E}\left[\frac{SE_t}{N}\right] &= s_{t-1} (1 - \exp(-\beta i_{t-1})), & \quad \text{Var}\left(\frac{SE_t}{N}\right) &= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
@@ -310,3 +296,23 @@ $$
     &= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
 \end{aligned}
 $$
+
+## Divergence Summary
+
+```{r, include=T,echo=F}
+#| label: tbl-div-results
+#| tbl-cap: "Summary of divergences across 200 simulations for each detection probability."
+#| tbl-colwidths: [20,10,8,8,8,8,8]
+rate_div %>% 
+  mutate(p = case_when(
+  p==.15 ~ "Low (0.15)",
+  p==.25 ~ "Medium (0.25)",
+  p==.50 ~ "High (0.50)",
+  p==.85 ~ "High2 (0.85)")) %>% 
+  rename(`Detection Probability` = p, `Mean (SD)` = mean_div) %>%
+  filter(`Detection Probability` %in% c("Low (0.15)", "Medium (0.25)", "High (0.50)")) %>%
+  mutate(`Detection Probability`=factor(`Detection Probability`, levels=c("Low (0.15)", "Medium (0.25)", "High (0.50)"))) %>%
+  arrange(`Detection Probability`) %>%
+  kable(align = c("l","r","r","r","r","r","r")) %>%
+  add_header_above(c(" " = 2, "Percentile" = 5))
+```

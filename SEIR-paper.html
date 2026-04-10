@@ -110,7 +110,14 @@ window.Quarto = {
   <li><a href="#covid-19-case-study-using-utah-data" id="toc-covid-19-case-study-using-utah-data" class="nav-link" data-scroll-target="#covid-19-case-study-using-utah-data"><span class="header-section-number">4</span> Covid-19 Case Study using Utah Data</a></li>
   <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion"><span class="header-section-number">5</span> Discussion</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes"><span class="header-section-number">6</span> Notes</a></li>
-  <li><a href="#appendix-continuous-approximation-of-discrete-transitions" id="toc-appendix-continuous-approximation-of-discrete-transitions" class="nav-link" data-scroll-target="#appendix-continuous-approximation-of-discrete-transitions"><span class="header-section-number">7</span> Appendix: Continuous Approximation of Discrete Transitions</a></li>
+  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">7</span> Appendix</a>
+  <ul class="collapse">
+  <li><a href="#continuous-approximation-of-discrete-transitions" id="toc-continuous-approximation-of-discrete-transitions" class="nav-link" data-scroll-target="#continuous-approximation-of-discrete-transitions"><span class="header-section-number">7.1</span> Continuous Approximation of Discrete Transitions</a>
+  <ul class="collapse">
+  <li><a href="#sec-inverse-logit" id="toc-sec-inverse-logit" class="nav-link" data-scroll-target="#sec-inverse-logit"><span class="header-section-number">7.1.1</span> Inverse Logit Calculation</a></li>
+  </ul></li>
+  <li><a href="#divergence-summary" id="toc-divergence-summary" class="nav-link" data-scroll-target="#divergence-summary"><span class="header-section-number">7.2</span> Divergence Summary</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -174,7 +181,7 @@ window.Quarto = {
 
 <section id="introduction" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
-<p>Unobservable individual-level heterogeneity in contact patterns, susceptibility and propensity to get tested are hallmark characteristics of infectious disease transmission and case reporting <span class="citation" data-cites="lloydsmith">(<a href="#ref-lloydsmith" role="doc-biblioref">Lloyd-Smith et al. 2005</a>)</span> (need more here about heterogeneity in susceptiblity and reporting). Such unobservable heterogeneity suggests that models of population-level infectious disease transmission should incorporate stochastic elements in both the state and observation processes (maybe cite a paper about POMP here). At the same time, the COVID-19 pandemic recorded disease surveillance data stratified by date, county, age and sex, which putatively allowed for models to incorporate terms to learn the nuances of local-to-space-and-time transmission. Unfortunately, building such structure into stochastic transmission models is challenging due to the computational burden of integrating over latent discrete state spaces.</p>
+<p>Unobservable individual-level heterogeneity in contact patterns, susceptibility and propensity to get tested are hallmark characteristics of infectious disease transmission and case reporting <span class="citation" data-cites="lloydsmith">(<a href="#ref-lloydsmith" role="doc-biblioref">Lloyd-Smith et al. 2005</a>)</span> (need more here about heterogeneity in susceptiblity and reporting). Such unobservable heterogeneity suggests that models of population-level infectious disease transmission should incorporate stochastic elements in both the state and observation processes (maybe cite a paper about POMP here). At the same time, the COVID-19 pandemic recorded disease surveillance data stratified by date, county, age and sex, which putatively allowed for models to incorporate shared spatio-temporal and demographic heterogeneity in order to characterize the nuances of local transmission. Unfortunately, building such structure into stochastic transmission models is challenging due to the computational burden of integrating over latent discrete state spaces.</p>
 <p>Recent innovations in addressing the computational burden of fitting complex stochastic transmission models include linear noise approximations or LNA <span class="citation" data-cites="fintziLinearNoiseApproximation2022">(<a href="#ref-fintziLinearNoiseApproximation2022" role="doc-biblioref">Fintzi, Wakefield, and Minin 2022</a>)</span>, particle filtering and iterated filtering <span class="citation" data-cites="liInferenceSpatiotemporalDynamics2024">(<a href="#ref-liInferenceSpatiotemporalDynamics2024" role="doc-biblioref">Li et al. 2024</a>)</span>, Dirichlet distributed compartment models <span class="citation" data-cites="zhouSpatiotemporalEpidemiologicalPrediction2020">(<a href="#ref-zhouSpatiotemporalEpidemiologicalPrediction2020" role="doc-biblioref">Zhou et al. 2020</a>)</span>, and exact marginalization using Laplace Transformations <span class="citation" data-cites="hoDirectLikelihoodbasedInference2018">(<a href="#ref-hoDirectLikelihoodbasedInference2018" role="doc-biblioref">Ho, Crawford, and Suchard 2018</a>)</span>. Despite these innovations, there are limitations to each approach. The LNA approach approximates increments of a continuous-time stochastic-disease-compartment-model with an exponentiated multivariate Gaussian; a limitation to this approach is that the trajectories don’t necessarily adhere to the population limits, namely that cumulative infections must be less than or equal to the population size. This issue may occur at the tail end of an epidemic. Ideally, approximate inference methods for stochastic compartment models would respect the natural constraints imposed by finitely-sized populations.</p>
 <p>Under-ascertainment of disease cases in surveillance data further exacerbates these challenge as models must also contend with the complication of biased measurement error. Each so-called line-listing reported by a state health agency typically represents a symptomatic case of the disease of interest or an asymptomatic case that was identified in subsequent contact tracing. Under-counting may result from asymptomatic cases that go unreported or lack of access to testing, both of which led to deflated case counts during the COVID-19 pandemic. Thus, effective models for transmission dynamics must incorporate a factor to account for under-counting.</p>
 <p>Various approaches have been developed in order to estimate disease ascertainment rates in infectious disease data including seroprevalence studies <span class="citation" data-cites="taylor2023seroprevalence samore2021probability">(<a href="#ref-taylor2023seroprevalence" role="doc-biblioref">Taylor et al. 2023</a>; <a href="#ref-samore2021probability" role="doc-biblioref">Samore et al. 2021</a>)</span>, multiplier models <span class="citation" data-cites="reese2021estimated">(<a href="#ref-reese2021estimated" role="doc-biblioref">Reese et al. 2021</a>)</span>, back-calculation from deaths or hospitalizations, and most commonly, dynamic transmission models or compartment models which jointly estimate disease dynamics and disease ascertainment rate <span class="citation" data-cites="deo2021new chitwood2022reconstructing">(<a href="#ref-deo2021new" role="doc-biblioref">Deo and Grover 2021</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>. These dynamic transmission models are typically ODE-based models, which correspond to large-population limits of more realistic stochastic transmission models with discrete state spaces <span class="citation" data-cites="keeling2008modeling">(<a href="#ref-keeling2008modeling" role="doc-biblioref">Keeling and Rohani 2008</a>)</span>.</p>
@@ -231,12 +238,12 @@ B_{it} &amp;= \phi B_{i,t-1} + \sigma \epsilon_{it}, \quad t&gt;1
 <p>Since NUTS requires gradients, discrete latent variables are approximated by continuous processes. In the Stan implementation we replace the discrete Binomial and Beta-Binomial latent transitions with continuous transition proportions modeled on the logit scale as Normal random variables, and recover counts by multiplying those proportions by compartment sizes. Variances for the logit-normal approximations are matched to the Binomial/Beta-Binomial moments via the delta method. Observed case counts are modeled using a Gaussian approximation to the Binomial (implemented as <code>ii ~ normal(p * EI, sqrt(EI * p * (1 - p)))</code>).</p>
 <p>First, binomial detection is approximated by Gaussian distributions <span class="citation" data-cites="brintz2018asymptotic brintz2023spatially">(<a href="#ref-brintz2018asymptotic" role="doc-biblioref">B. Brintz, Fuentes, and Madsen 2018</a>; <a href="#ref-brintz2023spatially" role="doc-biblioref">B. J. Brintz, Madsen, and Fuentes 2023</a>)</span>.<br>
 Second, transitions are modeled on the proportion scale by dividing by <span class="math inline">\(N_i\)</span>. Let lowercase letters denote proportions.</p>
-<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix). The AR(1) on <code>\log\beta</code> is initialized at its stationary distribution in Stan using <span class="math display">\[\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1\]</span> and the AR(1) coefficient is reparameterized as <span class="math inline">\(\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1\)</span> to constrain it to <span class="math inline">\((-1,1)\)</span>.</p>
+<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix Section <a href="#sec-inverse-logit" class="quarto-xref">Section&nbsp;7.1.1</a>). The AR(1) on <code>\log\beta</code> is initialized at its stationary distribution in Stan using <span class="math display">\[\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1\]</span> and the AR(1) coefficient is reparameterized as <span class="math inline">\(\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1\)</span> to constrain it to <span class="math inline">\((-1,1)\)</span>.</p>
 </section>
 </section>
 <section id="simulating-underreporting" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Simulating Underreporting</h1>
-<p>We used simulated data to assess model performance in recovering true parameters and states. Similar to the Utah health district data, we simulated 30 weeks of data for 11 districts with known parameters. In 200 simulations of observed case counts per setting, we varied the detection probability (<span class="math inline">\(p=0.15, 0.25, 0.50\)</span>), used true health district population data, and set true parameters to match posterior draws from the Utah data model fit. Across simulated detection probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. Higher detection probabilities led to worsened parameter recovery (<a href="#tbl-sim-results" class="quarto-xref">Table&nbsp;1</a>).</p>
+<p>We used simulated data to assess model performance in recovering true parameters and states. Our simulations mimicked the structure of the Utah health district data used in our case study. We simulated 30 weeks of data for 11 districts with known parameters. The known parameters were based on random draws from the Utah data model fit. However, we varied the ascertainment problability (<span class="math inline">\(p=0.15, 0.25, 0.50\)</span>), simulating 200 observed case counts per setting, used true health district population data. Across simulated ascertainment probabilities, we found the model recovered parameters well with low average error, high coverage, and reasonable credible interval widths across all detection probabilities. Higher detection probabilities led to worsened parameter recovery (<a href="#tbl-sim-results" class="quarto-xref">Table&nbsp;1</a>).</p>
 <div class="cell" data-tbl-colwidths="[20,20,20,20]">
 <div id="tbl-sim-results" class="cell quarto-float anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -286,7 +293,114 @@ Table&nbsp;1: Simulation results for key parameters across detection probabiliti
 </figure>
 </div>
 </div>
-<p>While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (<a href="#tbl-div-results" class="quarto-xref">Table&nbsp;2</a>). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities. Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.</p>
+<p>While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, <a href="#tbl-div-results" class="quarto-xref">Table&nbsp;2</a>). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities . Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.</p>
+</section>
+<section id="covid-19-case-study-using-utah-data" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Covid-19 Case Study using Utah Data</h1>
+<p>Covid-19’s incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19’s biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic <span class="citation" data-cites="yang2020modified">(<a href="#ref-yang2020modified" role="doc-biblioref">Yang et al. 2020</a>)</span>. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments <span class="citation" data-cites="hao2020reconstruction chitwood2022reconstructing">(<a href="#ref-hao2020reconstruction" role="doc-biblioref">Hao et al. 2020</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>.</p>
+<p>We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean disease ascertainment rate was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates show the effect of under-ascertainment on observed case counts (<a href="#fig-detection" class="quarto-xref">Figure&nbsp;1</a>). Our estimated disease ascertainment rate of 16% (90% CrI: 14% to 17%) is consistent with other early-pandemic under-ascertainment estimates, though direct comparison requires caution because target populations, time periods, and estimands differ. In Utah, <span class="citation" data-cites="havers2020seroprevalence">Havers et al. (<a href="#ref-havers2020seroprevalence" role="doc-biblioref">2020</a>)</span> estimated roughly 10.5 infections per reported case among adults statewide by early May 2020, implying a detection fraction near 9.5%, while <span class="citation" data-cites="samore2021probability">Samore et al. (<a href="#ref-samore2021probability" role="doc-biblioref">2021</a>)</span> estimated a 40% detection fraction in four urban Utah counties during May-June 2020. Nationally, <span class="citation" data-cites="chitwood2022reconstructing">Chitwood et al. (<a href="#ref-chitwood2022reconstructing" role="doc-biblioref">2022</a>)</span> estimated a median state-level ascertainment of 13.2% during March-May 2020. Our estimate of 16% is in line with these estimates, though differences in time periods, geographic scope, and methods make direct comparisons difficult.</p>
+<p>The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean (<span class="math inline">\(B_{it}\)</span>) of 0.11 (90% CrI: -0.05-0.27) and standard deviation (<span class="math inline">\(\sigma\)</span>) of 0.54 (90% CrI: 0.43-0.66). In addition to AR(1) correlated (<span class="math inline">\(\phi\)</span>=0.81 (90% CrI: 0.72-0.88)) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between 0.26 and 0.87 and recovery rate between 0.2 and 0.68 between districts with beta-binomial overdispersion parameters of 0.01 (90% CrI: 0-0.01) and 0.77 (90% CrI: 0.43-0.98), respectively.</p>
+<p>Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.</p>
+<div id="fig-detection" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="utah_120525_bb.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="discussion" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Discussion</h1>
+<p>We developed a stochastic SEIR model using a continuous approximation to discrete transitions to estimate the disease ascertainment rate of Covid-19 in Utah health districts. Our model estimated a disease ascertainment rate of 16% (90% CrI: 14–17%), indicating substantial under-ascertainment during the study period. The hierarchical AR(1) structure on transmission rates effectively captured temporal changes and spatial heterogeneity across districts.</p>
+<p>The disease ascertainment rate of 16% indicates that that weekly incident reported cases are only a fraction of the true number of infections (E -&gt; I). This finding aligns with prior studies that have reported significant under-ascertainment of Covid-19 infections, particularly during the early stages of the pandemic when testing resources were limited <span class="citation" data-cites="taylor2023seroprevalence samore2021probability">(<a href="#ref-taylor2023seroprevalence" role="doc-biblioref">Taylor et al. 2023</a>; <a href="#ref-samore2021probability" role="doc-biblioref">Samore et al. 2021</a>)</span>. Our particular estimate is applies to this specific reporting system and 30 week time period during the beginning of the pandemic in Utah, and may not generalize to other locations or time periods due to changes in testing availability, public health policies, and population behavior. Underreporting is a composite of asymptomatic infections, testing access and behavior, and reporting practices, not just biological symptoms.</p>
+<p>A classic trade-off in compartmental modeling is between model complexity and parameter identifiability. The SEIR model adds complexity by incorporating an exposed (E) compartment, which captures the incubation period of Covid-19. Our version additionally, incorporates the detection fraction moving from the E to I phase. Identifiability issues mean that higher transmission and lower detection can resemble lower transmission and higher detection. Our model addresses this challenge by leveraging hierarchical structures (partial pooling) across districts, and mechanistic movement between compartments, while maintaining largely loose priors on parameters.</p>
+<p>Our simulation study demonstrated the model’s ability to recover true parameters across varying detection probabilities, with improved performance at higher detection rates. While the case study fit showed no divergences, the simulation study revealed low divergence rates, particularly at higher detection probabilities.</p>
+<p>The beta-binomial transitions between compartments allowed for overdispersion in the transition process, capturing heterogeneity in transmission dynamics which can avoid overly-confident inference and absorb mild misspecification of the transition process. The estimate for the overdispersion parameter from S to E was very close to 0, implies that the binomial model was sufficient for that transition and that time to infection from exposure was consistent across time, which aligns with clinical understanding of Covid-19 infection. The overdispersion parameters for E to I and I to R were higher, indicating more variability in those transitions.</p>
+</section>
+<section id="notes" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Notes</h1>
+<p>End of April for draft ready to submit to Biometrics…</p>
+<p>These are the first steps: Rob - Flesh out intro with information on SIR/SEIR/tSIR models in methods</p>
+<p>Rob - change the way we introduce the model</p>
+<p>Ben - Edit this part: Results re-organize so simulation is first and discuss parameters in case study relative to other studies</p>
+</section>
+<section id="appendix" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Appendix</h1>
+<section id="continuous-approximation-of-discrete-transitions" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="continuous-approximation-of-discrete-transitions"><span class="header-section-number">7.1</span> Continuous Approximation of Discrete Transitions</h2>
+<section id="sec-inverse-logit" class="level3" data-number="7.1.1">
+<h3 data-number="7.1.1" class="anchored" data-anchor-id="sec-inverse-logit"><span class="header-section-number">7.1.1</span> Inverse Logit Calculation</h3>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}\left[\frac{SE_t}{N}\right] &amp;= s_{t-1} (1 - \exp(-\beta i_{t-1})), &amp; \quad \text{Var}\left(\frac{SE_t}{N}\right) &amp;= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}\left[\frac{EI_t}{N}\right] &amp;= e_{t-1} (1 - \exp(-\eta)), &amp; \quad \text{Var}\left(\frac{EI_t}{N}\right) &amp;= \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}\left[\frac{IR_t}{N}\right] &amp;= i_{t-1} (1 - e^{-\gamma}), &amp; \quad \text{Var}\left(\frac{IR_t}{N}\right) &amp;= \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Let <span class="math inline">\(se_t\)</span>, <span class="math inline">\(ei_t\)</span>, and <span class="math inline">\(ir_t\)</span> be random variables with bounds <span class="math inline">\([0, s_{t-1}]\)</span>, <span class="math inline">\([0, e_{t-1}]\)</span>, and <span class="math inline">\([0, i_{t-1}]\)</span>, respectively. We need to find <span class="math inline">\(u_t\)</span>, <span class="math inline">\(v_t\)</span>, and <span class="math inline">\(w_t\)</span> distributed on <span class="math inline">\([0, 1]\)</span> such that <span class="math inline">\(se_t = u_t s_{t-1}\)</span>, <span class="math inline">\(ei_t = v_t e_{t-1}\)</span>, and <span class="math inline">\(ir_t = i_{t-1} w_t\)</span> with the same mean and variance.</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}[s_{t-1} u_t] &amp;= s_{t-1} \mathbb{E}[u_t] = s_{t-1}(1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(s_{t-1} u_t) &amp;= s_{t-1}^2 \text{Var}(u_t) = \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[e_{t-1} v_t] &amp;= e_{t-1} \mathbb{E}[v_t] = e_{t-1}(1 - \exp(-\eta)) \\
+    \text{Var}(e_{t-1} v_t) &amp;= e_{t-1}^2 \text{Var}(v_t) = \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[i_{t-1} w_t] &amp;= i_{t-1} \mathbb{E}[w_t] = i_{t-1}(1 - e^{-\gamma}) \\
+    \text{Var}(i_{t-1} w_t) &amp;= i_{t-1}^2 \text{Var}(w_t) = \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Solving for <span class="math inline">\(\mathbb{E}[u_t]\)</span>, <span class="math inline">\(\text{Var}(u_t)\)</span>, <span class="math inline">\(\mathbb{E}[v_t]\)</span>, <span class="math inline">\(\text{Var}(v_t)\)</span>, <span class="math inline">\(\mathbb{E}[w_t]\)</span>, and <span class="math inline">\(\text{Var}(w_t)\)</span> implies</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mathbb{E}[u_t] &amp;= (1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(u_t) &amp;= \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[v_t] &amp;= (1 - \exp(-\eta)) \\
+    \text{Var}(v_t) &amp;= \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[w_t] &amp;= (1 - e^{-\gamma}) \\
+    \text{Var}(w_t) &amp;= \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>What we could do is to take <span class="math inline">\(\tilde{u}_t\)</span>, <span class="math inline">\(\tilde{v}_t\)</span>, <span class="math inline">\(\tilde{w}_t \sim \text{Normal}\)</span> and let <span class="math inline">\(u_t = \text{inv\_logit}(\tilde{u}_t)\)</span>, <span class="math inline">\(v_t = \text{inv\_logit}(\tilde{v}_t)\)</span>, and <span class="math inline">\(w_t = \text{inv\_logit}(\tilde{w}_t)\)</span>.</p>
+<p>The downside of this approach is that the expectation of the inverse logit of a normal does not have an analytic form, but we could approximate with the Delta method. Let</p>
+<p><span class="math display">\[
+\tilde{u}_t \sim \text{Normal}(\mu_u, \sigma^2_u), \tilde{v}_t \sim \text{Normal}(\mu_v, \sigma^2_v), \tilde{w}_t \sim \text{Normal}(\mu_w, \sigma^2_w).
+\]</span></p>
+<p>We need to find <span class="math inline">\(\mu_u\)</span>, <span class="math inline">\(\sigma^2_u\)</span>, <span class="math inline">\(\mu_v\)</span>, <span class="math inline">\(\sigma^2_v\)</span>, <span class="math inline">\(\mu_w\)</span>, <span class="math inline">\(\sigma^2_w\)</span> such that</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx (1 - \exp(-\beta i_{t-1})), &amp;\quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx (1 - \exp(-\eta)), \quad &amp; \text{Var}(\text{expit}(\tilde{v}_t)) \approx \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx (1 - e^{-\gamma}), \quad &amp; \text{Var}(\text{expit}(\tilde{w}_t)) \approx \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+\]</span></p>
+<p>Using the delta method gives that</p>
+<p><span class="math display">\[
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx \text{expit}(\mu_u), &amp; \quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \sigma_u^2 (\text{expit}(\mu_u)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx \text{expit}(\mu_v), &amp; \quad \text{Var}(\text{expit}(\tilde{v}_t)) \approx \sigma_v^2 (\text{expit}(\mu_v)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx \text{expit}(\mu_w), &amp;\quad \text{Var}(\text{expit}(\tilde{w}_t)) \approx \sigma_w^2 (\text{expit}(\mu_w)^\prime)^2
+\end{aligned}
+\]</span></p>
+<p>This leads to the following parameters:</p>
+<p><span class="math display">\[
+\begin{aligned}
+    \mu_u &amp;= \text{logit}(1 - \exp(-\beta i_{t-1}))  \\
+    \sigma_u^2 &amp;= \frac{1}{s_{t-1} N} \frac{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1}))}{((1 - \text{expit}(\mu_u))\text{expit}(\mu_u))^2} \\
+    &amp;= \frac{1}{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) s_{t-1} N} \\
+    \mu_v &amp;= \text{logit}(1 - \exp(-\eta))  \\
+    \sigma_v^2 &amp;= \frac{1}{e_{t-1} N} \frac{\exp(-\eta)(1 - \exp(-\eta))}{((1 - \text{expit}(\mu_v))\text{expit}(\mu_v))^2} \\
+    &amp;= \frac{1}{\exp(-\eta)(1 - \exp(-\eta)) e_{t-1} N} \\
+    \mu_w &amp;= \text{logit}(1 - e^{-\gamma})  \\
+    \sigma_w^2 &amp;= \frac{1}{i_{t-1} N} \frac{e^{-\gamma}(1 - e^{-\gamma}))}{((1 - \text{expit}(\mu_w))\text{expit}(\mu_w))^2} \\
+    &amp;= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
+\end{aligned}
+\]</span></p>
+</section>
+</section>
+<section id="divergence-summary" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="divergence-summary"><span class="header-section-number">7.2</span> Divergence Summary</h2>
 <div class="cell" data-tbl-colwidths="[20,10,8,8,8,8,8]">
 <div id="tbl-div-results" class="cell quarto-float anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -361,106 +475,8 @@ Percentile
 </figure>
 </div>
 </div>
-</section>
-<section id="covid-19-case-study-using-utah-data" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Covid-19 Case Study using Utah Data</h1>
-<p>Covid-19’s incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19’s biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic <span class="citation" data-cites="yang2020modified">(<a href="#ref-yang2020modified" role="doc-biblioref">Yang et al. 2020</a>)</span>. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments <span class="citation" data-cites="hao2020reconstruction chitwood2022reconstructing">(<a href="#ref-hao2020reconstruction" role="doc-biblioref">Hao et al. 2020</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>.</p>
-<p>We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean disease ascertainment rate was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates show the effect of under-ascertainment on observed case counts (<a href="#fig-detection" class="quarto-xref">Figure&nbsp;1</a>). Our estimated disease ascertainment rate of 16% (90% CrI: 14% to 17%) is consistent with other early-pandemic under-ascertainment estimates, though direct comparison requires caution because target populations, time periods, and estimands differ. In Utah, <span class="citation" data-cites="havers2020seroprevalence">Havers et al. (<a href="#ref-havers2020seroprevalence" role="doc-biblioref">2020</a>)</span> estimated roughly 10.5 infections per reported case among adults statewide by early May 2020, implying a detection fraction near 9.5%, while <span class="citation" data-cites="samore2021probability">Samore et al. (<a href="#ref-samore2021probability" role="doc-biblioref">2021</a>)</span> estimated a 40% detection fraction in four urban Utah counties during May-June 2020. Nationally, <span class="citation" data-cites="chitwood2022reconstructing">Chitwood et al. (<a href="#ref-chitwood2022reconstructing" role="doc-biblioref">2022</a>)</span> estimated a median state-level ascertainment of 13.2% during March-May 2020. Our estimate of 16% is in line with these estimates, though differences in time periods, geographic scope, and methods make direct comparisons difficult.</p>
-<p>The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean (<span class="math inline">\(B_{it}\)</span>) of 0.11 (90% CrI: -0.05-0.27) and standard deviation (<span class="math inline">\(\sigma\)</span>) of 0.54 (90% CrI: 0.43-0.66). In addition to AR(1) correlated (<span class="math inline">\(\phi\)</span>=0.81 (90% CrI: 0.72-0.88)) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between 0.26 and 0.87 and recovery rate between 0.2 and 0.68 between districts with beta-binomial overdispersion parameters of 0.01 (90% CrI: 0-0.01) and 0.77 (90% CrI: 0.43-0.98), respectively.</p>
-<p>Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.</p>
-<div id="fig-detection" class="quarto-figure quarto-figure-center quarto-float anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="utah_120525_bb.png" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
-</figcaption>
-</figure>
-</div>
-</section>
-<section id="discussion" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Discussion</h1>
-<p>We developed a stochastic SEIR model using a continuous approximation to discrete transitions to estimate the disease ascertainment rate of Covid-19 in Utah health districts. Our model estimated a disease ascertainment rate of 16% (90% CrI: 14–17%), indicating substantial under-ascertainment during the study period. The hierarchical AR(1) structure on transmission rates effectively captured temporal changes and spatial heterogeneity across districts.</p>
-<p>The disease ascertainment rate of 16% indicates that that weekly incident reported cases are only a fraction of the true number of infections (E -&gt; I). This finding aligns with prior studies that have reported significant under-ascertainment of Covid-19 infections, particularly during the early stages of the pandemic when testing resources were limited <span class="citation" data-cites="taylor2023seroprevalence samore2021probability">(<a href="#ref-taylor2023seroprevalence" role="doc-biblioref">Taylor et al. 2023</a>; <a href="#ref-samore2021probability" role="doc-biblioref">Samore et al. 2021</a>)</span>. Our particular estimate is applies to this specific reporting system and 30 week time period during the beginning of the pandemic in Utah, and may not generalize to other locations or time periods due to changes in testing availability, public health policies, and population behavior. Underreporting is a composite of asymptomatic infections, testing access and behavior, and reporting practices, not just biological symptoms.</p>
-<p>A classic trade-off in compartmental modeling is between model complexity and parameter identifiability. The SEIR model adds complexity by incorporating an exposed (E) compartment, which captures the incubation period of Covid-19. Our version additionally, incorporates the detection fraction moving from the E to I phase. Identifiability issues mean that higher transmission and lower detection can resemble lower transmission and higher detection. Our model addresses this challenge by leveraging hierarchical structures (partial pooling) across districts, and mechanistic movement between compartments, while maintaining largely loose priors on parameters.</p>
-<p>Our simulation study demonstrated the model’s ability to recover true parameters across varying detection probabilities, with improved performance at higher detection rates. While the case study fit showed no divergences, the simulation study revealed low divergence rates, particularly at higher detection probabilities.</p>
-<p>The beta-binomial transitions between compartments allowed for overdispersion in the transition process, capturing heterogeneity in transmission dynamics which can avoid overly-confident inference and absorb mild misspecification of the transition process. The estimate for the overdispersion parameter from S to E was very close to 0, implies that the binomial model was sufficient for that transition and that time to infection from exposure was consistent across time, which aligns with clinical understanding of Covid-19 infection. The overdispersion parameters for E to I and I to R were higher, indicating more variability in those transitions.</p>
-</section>
-<section id="notes" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Notes</h1>
-<p>End of April for draft ready to submit to Biometrics…</p>
-<p>These are the first steps: Rob - Flesh out intro with information on SIR/SEIR/tSIR models in methods</p>
-<p>Rob - change the way we introduce the model</p>
-<p>Ben - Edit this part: Results re-organize so simulation is first and discuss parameters in case study relative to other studies</p>
-</section>
-<section id="appendix-continuous-approximation-of-discrete-transitions" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Appendix: Continuous Approximation of Discrete Transitions</h1>
-<p><span class="math display">\[
-\begin{aligned}
-    \mathbb{E}\left[\frac{SE_t}{N}\right] &amp;= s_{t-1} (1 - \exp(-\beta i_{t-1})), &amp; \quad \text{Var}\left(\frac{SE_t}{N}\right) &amp;= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}\left[\frac{EI_t}{N}\right] &amp;= e_{t-1} (1 - \exp(-\eta)), &amp; \quad \text{Var}\left(\frac{EI_t}{N}\right) &amp;= \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}\left[\frac{IR_t}{N}\right] &amp;= i_{t-1} (1 - e^{-\gamma}), &amp; \quad \text{Var}\left(\frac{IR_t}{N}\right) &amp;= \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-\]</span></p>
-<p>Let <span class="math inline">\(se_t\)</span>, <span class="math inline">\(ei_t\)</span>, and <span class="math inline">\(ir_t\)</span> be random variables with bounds <span class="math inline">\([0, s_{t-1}]\)</span>, <span class="math inline">\([0, e_{t-1}]\)</span>, and <span class="math inline">\([0, i_{t-1}]\)</span>, respectively. We need to find <span class="math inline">\(u_t\)</span>, <span class="math inline">\(v_t\)</span>, and <span class="math inline">\(w_t\)</span> distributed on <span class="math inline">\([0, 1]\)</span> such that <span class="math inline">\(se_t = u_t s_{t-1}\)</span>, <span class="math inline">\(ei_t = v_t e_{t-1}\)</span>, and <span class="math inline">\(ir_t = i_{t-1} w_t\)</span> with the same mean and variance.</p>
-<p><span class="math display">\[
-\begin{aligned}
-    \mathbb{E}[s_{t-1} u_t] &amp;= s_{t-1} \mathbb{E}[u_t] = s_{t-1}(1 - \exp(-\beta i_{t-1})) \\
-    \text{Var}(s_{t-1} u_t) &amp;= s_{t-1}^2 \text{Var}(u_t) = \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}[e_{t-1} v_t] &amp;= e_{t-1} \mathbb{E}[v_t] = e_{t-1}(1 - \exp(-\eta)) \\
-    \text{Var}(e_{t-1} v_t) &amp;= e_{t-1}^2 \text{Var}(v_t) = \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}[i_{t-1} w_t] &amp;= i_{t-1} \mathbb{E}[w_t] = i_{t-1}(1 - e^{-\gamma}) \\
-    \text{Var}(i_{t-1} w_t) &amp;= i_{t-1}^2 \text{Var}(w_t) = \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-\]</span></p>
-<p>Solving for <span class="math inline">\(\mathbb{E}[u_t]\)</span>, <span class="math inline">\(\text{Var}(u_t)\)</span>, <span class="math inline">\(\mathbb{E}[v_t]\)</span>, <span class="math inline">\(\text{Var}(v_t)\)</span>, <span class="math inline">\(\mathbb{E}[w_t]\)</span>, and <span class="math inline">\(\text{Var}(w_t)\)</span> implies</p>
-<p><span class="math display">\[
-\begin{aligned}
-    \mathbb{E}[u_t] &amp;= (1 - \exp(-\beta i_{t-1})) \\
-    \text{Var}(u_t) &amp;= \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}[v_t] &amp;= (1 - \exp(-\eta)) \\
-    \text{Var}(v_t) &amp;= \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}[w_t] &amp;= (1 - e^{-\gamma}) \\
-    \text{Var}(w_t) &amp;= \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-\]</span></p>
-<p>What we could do is to take <span class="math inline">\(\tilde{u}_t\)</span>, <span class="math inline">\(\tilde{v}_t\)</span>, <span class="math inline">\(\tilde{w}_t \sim \text{Normal}\)</span> and let <span class="math inline">\(u_t = \text{inv\_logit}(\tilde{u}_t)\)</span>, <span class="math inline">\(v_t = \text{inv\_logit}(\tilde{v}_t)\)</span>, and <span class="math inline">\(w_t = \text{inv\_logit}(\tilde{w}_t)\)</span>.</p>
-<p>The downside of this approach is that the expectation of the inverse logit of a normal does not have an analytic form, but we could approximate with the Delta method. Let</p>
-<p><span class="math display">\[
-\tilde{u}_t \sim \text{Normal}(\mu_u, \sigma^2_u), \tilde{v}_t \sim \text{Normal}(\mu_v, \sigma^2_v), \tilde{w}_t \sim \text{Normal}(\mu_w, \sigma^2_w).
-\]</span></p>
-<p>We need to find <span class="math inline">\(\mu_u\)</span>, <span class="math inline">\(\sigma^2_u\)</span>, <span class="math inline">\(\mu_v\)</span>, <span class="math inline">\(\sigma^2_v\)</span>, <span class="math inline">\(\mu_w\)</span>, <span class="math inline">\(\sigma^2_w\)</span> such that</p>
-<p><span class="math display">\[
-\begin{aligned}
-\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx (1 - \exp(-\beta i_{t-1})), &amp;\quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx (1 - \exp(-\eta)), \quad &amp; \text{Var}(\text{expit}(\tilde{v}_t)) \approx \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
-\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx (1 - e^{-\gamma}), \quad &amp; \text{Var}(\text{expit}(\tilde{w}_t)) \approx \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-\]</span></p>
-<p>Using the delta method gives that</p>
-<p><span class="math display">\[
-\begin{aligned}
-\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx \text{expit}(\mu_u), &amp; \quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \sigma_u^2 (\text{expit}(\mu_u)^\prime)^2 \\
-\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx \text{expit}(\mu_v), &amp; \quad \text{Var}(\text{expit}(\tilde{v}_t)) \approx \sigma_v^2 (\text{expit}(\mu_v)^\prime)^2 \\
-\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx \text{expit}(\mu_w), &amp;\quad \text{Var}(\text{expit}(\tilde{w}_t)) \approx \sigma_w^2 (\text{expit}(\mu_w)^\prime)^2
-\end{aligned}
-\]</span></p>
-<p>This leads to the following parameters:</p>
-<p><span class="math display">\[
-\begin{aligned}
-    \mu_u &amp;= \text{logit}(1 - \exp(-\beta i_{t-1}))  \\
-    \sigma_u^2 &amp;= \frac{1}{s_{t-1} N} \frac{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1}))}{((1 - \text{expit}(\mu_u))\text{expit}(\mu_u))^2} \\
-    &amp;= \frac{1}{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) s_{t-1} N} \\
-    \mu_v &amp;= \text{logit}(1 - \exp(-\eta))  \\
-    \sigma_v^2 &amp;= \frac{1}{e_{t-1} N} \frac{\exp(-\eta)(1 - \exp(-\eta))}{((1 - \text{expit}(\mu_v))\text{expit}(\mu_v))^2} \\
-    &amp;= \frac{1}{\exp(-\eta)(1 - \exp(-\eta)) e_{t-1} N} \\
-    \mu_w &amp;= \text{logit}(1 - e^{-\gamma})  \\
-    \sigma_w^2 &amp;= \frac{1}{i_{t-1} N} \frac{e^{-\gamma}(1 - e^{-\gamma}))}{((1 - \text{expit}(\mu_w))\text{expit}(\mu_w))^2} \\
-    &amp;= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
-\end{aligned}
-\]</span></p>
 
+</section>
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
