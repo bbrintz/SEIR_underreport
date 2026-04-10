@@ -16,6 +16,11 @@ format:
     toc-depth: 3
     number-sections: true
     code-fold: true
+  pdf:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
 bibliography: try.bib
 
 ---
