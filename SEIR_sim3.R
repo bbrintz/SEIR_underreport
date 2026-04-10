@@ -10,7 +10,7 @@ iter=as.numeric(commandArgs(T))
 #1,1000
 
 chn=2#2#as.numeric(commandArgs(T))
-fiter=sample(1:500,1)#500#500#sample(1:1500,1)
+fiter=sample(1:500,1)
 
 #set.seed(123)
 #beta <- 1.05
@@ -20,7 +20,6 @@ fiter=sample(1:500,1)#500#500#sample(1:1500,1)
 
 fit=as_cmdstan_fit("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-1-3f135e.csv")
 
-
 #fit2=as_cmdstan_fit(paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508251617-",chn,"-b39fc5.csv"))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
@@ -29,6 +28,7 @@ fit=as_cmdstan_fit("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v
 
 
 N_C <- 11
+N_C_use=11
 TT <- 30
 
 
@@ -43,14 +43,14 @@ mu_log_beta = fit$draws("mu_log_beta", format = "draws_matrix")[fiter]
 #pop=read_csv("./data/utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
 pop=read_csv("./utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
 counties=c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
-pop_size = pop$Population_2020[counties]
+pop_size = pop$Population_2020[counties][1:N_C_use]
 #pop=1e4*sample(1:N_C)#pop[counties,]
 
 #counties=c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
 #pop=read_csv("./data/utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
 #pop=pop$Population_2020[counties]#1e4*sample(5:N_C)#pop[counties,]
 #if(iter %in% 1:100) {p=.15} else if (iter %in% 101:200) {p=.5} else {p=.85}
-if(iter %in% 1:200) {p=.15} else if (iter %in% 201:400) {p=.5} else {p=.85}
+if(iter %in% 1:200) {p=.15} else if (iter %in% 201:400) {p=.5} else {p=.25}
 
 
 #fit$draws("p", format = "draws_matrix")[fiter]
@@ -68,7 +68,7 @@ sigma = fit$draws("sigma", format = "draws_matrix")[fiter]
 #  log_beta_mat[t,] <- log_beta[t] + sig_beta * rnorm(N_C,0,1)
 #}
 
-beta=matrix(fit$draws("beta_mat", format = "draws_matrix")[fiter,], nrow = TT, ncol = N_C)
+beta=matrix(fit$draws("beta_mat", format = "draws_matrix")[fiter,], nrow = TT, ncol = N_C)[,1:N_C_use]
 
 #exp(log_beta) %>% plot
 #beta=exp(log_beta_mat)
@@ -77,22 +77,22 @@ beta=matrix(fit$draws("beta_mat", format = "draws_matrix")[fiter,], nrow = TT, n
 #beta=readRDS('beta.rds')
 
 # create an empty list
-gamma <- as.numeric(fit$draws("gamma", format = "draws_matrix")[fiter,])#readRDS('gamma.rds')#runif(N_C, min = 0.59, max = 0.87)
+gamma <- as.numeric(fit$draws("gamma", format = "draws_matrix")[fiter,])[1:N_C_use]#readRDS('gamma.rds')#runif(N_C, min = 0.59, max = 0.87)
 
-eta <- as.numeric(fit$draws("eta", format = "draws_matrix")[fiter,])#readRDS('eta.rds')#runif(N_C, min = 0.29, max = 0.88)
+eta <- as.numeric(fit$draws("eta", format = "draws_matrix")[fiter,])[1:N_C_use]#readRDS('eta.rds')#runif(N_C, min = 0.29, max = 0.88)
 
 #E_0 <- round(.009*pop_size)#ample(10:20,N_C,TRUE)#round(c(11902,6600,1120,737))#
-i0= as.numeric(fit$draws("i0", format = "draws_matrix")[fiter,])#readRDS('i0.rds')#runif(N_C,.0003,.01)
+i0= as.numeric(fit$draws("i0", format = "draws_matrix")[fiter,])[1:N_C_use]#readRDS('i0.rds')#runif(N_C,.0003,.01)
 I_0 <- round(i0*pop_size)#
 
-first=readRDS("first.rds")
+first=readRDS("first.rds")[1:N_C_use]#sample(3:8,N_C,replace=T);first
 #phi_p = as.numeric(fit$draws("phi_p", format = "draws_matrix")[fiter])#readRDS('phi_p.rds')#runif(N_C, min = 0.05, max = 0.5)
 
 S_0 <- pop_size - I_0
-R <- S <- I <- E <- matrix(0,TT, N_C)
-ii <- SE <- IR <- EI <- matrix(0,TT-1, N_C)
+R <- S <- I <- E <- matrix(0,TT, N_C_use)
+ii <- SE <- IR <- EI <- matrix(0,TT-1, N_C_use)
 p_detect <- p
-for (i in 1:N_C){
+for (i in 1:N_C_use){
 S[1:(first[i]-1),i]= 0     
 S[first[i],i] <- S_0[i]
 
@@ -106,7 +106,7 @@ EI[first[i],i]=I_0[i]
 #imp_rate=50
 
 
-for (ct in  1:N_C) {
+for (ct in  1:N_C_use) {
     for (t in 2:(TT)){
     if (t > first[ct]) {
      SE[t-1,ct]=rbetabinom(1,S[t-1,ct],prob=1-exp(- sum(beta[t-1,ct] * I[t-1,ct]/ pop_size[ct])),rho=rho_se) 
@@ -124,9 +124,8 @@ for (ct in  1:N_C) {
 
 
 
-ii=matrix(rbinom(N_C*(TT-1),EI,p_detect),nrow=TT-1);ii
+ii=matrix(rbinom(N_C_use*(TT-1),EI,p_detect),nrow=TT-1);ii
 
-#ii=ii_save
 #ii=ii[,-11]
 ii[is.na(ii)] <- 0
 N_C=ncol(ii)
@@ -138,10 +137,10 @@ last<- unlist(1:N_C %>% purrr::map(function(col) {
   w=ifelse(is.na(w),TT-1,w)
 }))
 
-#run_len <- 20      # <-- choose how many consecutive time points define the tail
-#case_cut <- 75    # <-- "less than 100 cases"
+# run_len <- 20      # <-- choose how many consecutive time points define the tail
+# case_cut <- 75    # <-- "less than 100 cases"
 
-# last <- purrr::map_int(1:N_C, function(col) {
+# last <- purrr::map_int(1:N_C_use, function(col) {
 
 #   x <- ii[, col]
 
@@ -177,8 +176,8 @@ last<- unlist(1:N_C %>% purrr::map(function(col) {
 #   min(w0, wlow)
 # })
 
-ii  %>% as_tibble() %>% mutate(x=1:(TT-1)) %>% gather(Key, Value,-x) %>%
-ggplot(aes(x=x, y=Value)) + geom_line() + facet_wrap(~Key,scales="free_y")
+#ii  %>% as_tibble() %>% mutate(x=1:(TT-1)) %>% gather(Key, Value,-x) %>%
+#ggplot(aes(x=x, y=Value)) + geom_line() + facet_wrap(~Key,scales="free_y")
 
 
 #apply(ii, 2, function(col) {
@@ -206,9 +205,9 @@ dat <-
     min_first=min(first)
   )
 
-init = \() {list(u_t_logit_eta = matrix(rnorm(TT*dat$N_C, 0,1), TT, dat$N_C),
-                                  v_t_logit_eta = matrix(rnorm(TT*dat$N_C, 0,1), TT, dat$N_C),
-                                  w_t_logit_eta = matrix(rnorm(TT*dat$N_C, 0,1), TT, dat$N_C),
+init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
+                                  v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
+                                  w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
                                   raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
                                   #log_phi_p = rnorm(1,4,1),
@@ -230,17 +229,13 @@ init = \() {list(u_t_logit_eta = matrix(rnorm(TT*dat$N_C, 0,1), TT, dat$N_C),
 #seed(123)
 init=list(init(),init(),init(),init())
 
-
-
-
 fit = tt$sample(data = dat, chains = 4,
-                 adapt_delta = 0.90,
+                 adapt_delta = 0.99,
                  max_treedepth = 18,
                  init = init,
                  iter_warmup = 500,
-                 iter_sampling = 100, parallel_chains = 4,
-                 output_dir = "/Users/u6020766/stan_output")#,
-                 #step_size=.0009)#,
+                 iter_sampling = 500, parallel_chains = 4,
+                 step_size=.0009)#,
 
 
 diagn=fit$diagnostic_summary()

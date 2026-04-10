@@ -170,9 +170,30 @@ arrange(`Detection Probability`) %>%
 kable(align=c("l","c","c","c"))
 ```
 
-While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, @tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities . Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the detection fraction and latent incident infections, leading to slightly more divergent transitions.
+While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, @tbl-div-results). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities . Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the ascertainment fraction and latent incident infections, leading to slightly more divergent transitions.
 
 
+“The simulation study does not directly reuse latent EI trajectories from the Utah fit. Instead, it regenerates latent epidemics using Utah-calibrated process parameters drawn from a fit with estimated detection near p ≈ 0.15, and then varies the observation-level detection probability when simulating reported cases. As a result, some of the observed divergences may reflect not only higher detection probability itself, but also the fact that the simulated epidemics are generated under a parameter regime learned from a lower-detection setting.”
+
+To visualize this geometry, we fixed a Utah-calibrated latent incidence trajectory and examined how the observation-model log posterior changed as the detection probability varied. We then introduced a simple diagnostic scaling factor $\alpha$ that multiplies the latent $EI_{it}$ trajectory while holding the remaining process quantities fixed. In this parameterization, $\alpha=1$ corresponds to the baseline latent incidence path and values away from 1 represent multiplicative perturbations to that path.
+
+The most useful summary is the cross-section in $\alpha$ at the generating detection probability. These curves show how quickly the relative log posterior falls as latent incident infections are perturbed away from the baseline trajectory. Narrower curves indicate stronger local curvature in the latent-incidence direction. In our diagnostic simulations, these cross-sections become progressively sharper as the generating detection probability increases, which is consistent with the idea that higher detection can tighten the joint observation geometry and make Hamiltonian trajectories harder to integrate without divergences.
+
+::: {#fig-curvature}
+
+![](detection_geometry_cross_sections.png){width="100%"}
+
+Cross-sections of the relative log posterior in the latent-incidence scaling parameter $\alpha$, evaluated at the generating detection probability for each simulation setting. Here $\alpha=1$ is the baseline latent incidence trajectory and narrower curves indicate stronger local curvature in the latent-incidence direction.
+:::
+
+The full $(p,\alpha)$ surfaces provide complementary context by showing the underlying ridge: larger detection probabilities can often be offset by smaller latent incidence, and vice versa. We view these surfaces as supporting diagnostics rather than the primary summary because the one-dimensional cross-sections are easier to compare directly across detection settings.
+
+::: {#fig-curvature-surface}
+
+![](detection_geometry_surfaces.png){width="100%"}
+
+Observation-model diagnostic surfaces over the detection probability $p$ and a global multiplier $\alpha$ on latent incident infections. The black point marks the generating value $(p,\alpha=1)$ in each panel, and the red curve traces the local ridge in the observation-model geometry.
+:::
 
 # Covid-19 Case Study using Utah Data 
 
@@ -206,6 +227,9 @@ The beta-binomial transitions between compartments allowed for overdispersion in
 # Notes
 
 End of April for draft ready to submit to Biometrics...
+Stats in Medicine
+Stats methods in medical research 
+
 
 These are the first steps: 
 Rob - Flesh out intro with information on SIR/SEIR/tSIR models in methods
