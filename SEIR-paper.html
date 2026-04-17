@@ -109,14 +109,18 @@ window.Quarto = {
   <li><a href="#simulating-underreporting" id="toc-simulating-underreporting" class="nav-link" data-scroll-target="#simulating-underreporting"><span class="header-section-number">3</span> Simulating Underreporting</a></li>
   <li><a href="#covid-19-case-study-using-utah-data" id="toc-covid-19-case-study-using-utah-data" class="nav-link" data-scroll-target="#covid-19-case-study-using-utah-data"><span class="header-section-number">4</span> Covid-19 Case Study using Utah Data</a></li>
   <li><a href="#discussion" id="toc-discussion" class="nav-link" data-scroll-target="#discussion"><span class="header-section-number">5</span> Discussion</a></li>
-  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes"><span class="header-section-number">6</span> Notes</a></li>
-  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">7</span> Appendix</a>
+  <li><a href="#appendix-detection-geometry-diagnostic" id="toc-appendix-detection-geometry-diagnostic" class="nav-link" data-scroll-target="#appendix-detection-geometry-diagnostic"><span class="header-section-number">6</span> Appendix: Detection Geometry Diagnostic</a></li>
+  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes"><span class="header-section-number">7</span> Notes</a></li>
+  <li><a href="#appendix" id="toc-appendix" class="nav-link" data-scroll-target="#appendix"><span class="header-section-number">8</span> Appendix</a>
   <ul class="collapse">
-  <li><a href="#continuous-approximation-of-discrete-transitions" id="toc-continuous-approximation-of-discrete-transitions" class="nav-link" data-scroll-target="#continuous-approximation-of-discrete-transitions"><span class="header-section-number">7.1</span> Continuous Approximation of Discrete Transitions</a>
+  <li><a href="#continuous-approximation-of-discrete-transitions" id="toc-continuous-approximation-of-discrete-transitions" class="nav-link" data-scroll-target="#continuous-approximation-of-discrete-transitions"><span class="header-section-number">8.1</span> Continuous Approximation of Discrete Transitions</a>
   <ul class="collapse">
-  <li><a href="#sec-inverse-logit" id="toc-sec-inverse-logit" class="nav-link" data-scroll-target="#sec-inverse-logit"><span class="header-section-number">7.1.1</span> Inverse Logit Calculation</a></li>
+  <li><a href="#sec-inverse-logit" id="toc-sec-inverse-logit" class="nav-link" data-scroll-target="#sec-inverse-logit"><span class="header-section-number">8.1.1</span> Inverse Logit Calculation</a></li>
   </ul></li>
-  <li><a href="#divergence-summary" id="toc-divergence-summary" class="nav-link" data-scroll-target="#divergence-summary"><span class="header-section-number">7.2</span> Divergence Summary</a></li>
+  <li><a href="#divergence-summary" id="toc-divergence-summary" class="nav-link" data-scroll-target="#divergence-summary"><span class="header-section-number">8.2</span> Divergence Summary</a>
+  <ul class="collapse">
+  <li><a href="#detection-geometry-diagnostic" id="toc-detection-geometry-diagnostic" class="nav-link" data-scroll-target="#detection-geometry-diagnostic"><span class="header-section-number">8.2.1</span> Detection Geometry Diagnostic</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="SEIR-paper.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
@@ -238,7 +242,7 @@ B_{it} &amp;= \phi B_{i,t-1} + \sigma \epsilon_{it}, \quad t&gt;1
 <p>Since NUTS requires gradients, discrete latent variables are approximated by continuous processes. In the Stan implementation we replace the discrete Binomial and Beta-Binomial latent transitions with continuous transition proportions modeled on the logit scale as Normal random variables, and recover counts by multiplying those proportions by compartment sizes. Variances for the logit-normal approximations are matched to the Binomial/Beta-Binomial moments via the delta method. Observed case counts are modeled using a Gaussian approximation to the Binomial (implemented as <code>ii ~ normal(p * EI, sqrt(EI * p * (1 - p)))</code>).</p>
 <p>First, binomial detection is approximated by Gaussian distributions <span class="citation" data-cites="brintz2018asymptotic brintz2023spatially">(<a href="#ref-brintz2018asymptotic" role="doc-biblioref">B. Brintz, Fuentes, and Madsen 2018</a>; <a href="#ref-brintz2023spatially" role="doc-biblioref">B. J. Brintz, Madsen, and Fuentes 2023</a>)</span>.<br>
 Second, transitions are modeled on the proportion scale by dividing by <span class="math inline">\(N_i\)</span>. Let lowercase letters denote proportions.</p>
-<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix Section <a href="#sec-inverse-logit" class="quarto-xref">Section&nbsp;7.1.1</a>). The AR(1) on <code>\log\beta</code> is initialized at its stationary distribution in Stan using <span class="math display">\[\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1\]</span> and the AR(1) coefficient is reparameterized as <span class="math inline">\(\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1\)</span> to constrain it to <span class="math inline">\((-1,1)\)</span>.</p>
+<p>We approximate <span class="math inline">\(se_{it}, ei_{it}, ir_{it}\)</span> with scaled inverse-logits of normal random variables matched on mean and variance (see Appendix Section <a href="#sec-inverse-logit" class="quarto-xref">Section&nbsp;8.1.1</a>). The AR(1) on <code>\log\beta</code> is initialized at its stationary distribution in Stan using <span class="math display">\[\log\beta_{t_0} = \frac{\mu}{1-\phi} + \frac{\sigma}{\sqrt{1-\phi^2}} z_1\]</span> and the AR(1) coefficient is reparameterized as <span class="math inline">\(\phi = 2\,\text{inv\_logit}(v_{\text{raw}}) - 1\)</span> to constrain it to <span class="math inline">\((-1,1)\)</span>.</p>
 </section>
 </section>
 <section id="simulating-underreporting" class="level1" data-number="3">
@@ -293,10 +297,10 @@ Table&nbsp;1: Simulation results for key parameters across detection probabiliti
 </figure>
 </div>
 </div>
-<p>While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, <a href="#tbl-div-results" class="quarto-xref">Table&nbsp;2</a>). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities . Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the ascertainment fraction and latent incident infections, leading to slightly more divergent transitions.</p>
-<p>“The simulation study does not directly reuse latent EI trajectories from the Utah fit. Instead, it regenerates latent epidemics using Utah-calibrated process parameters drawn from a fit with estimated detection near p ≈ 0.15, and then varies the observation-level detection probability when simulating reported cases. As a result, some of the observed divergences may reflect not only higher detection probability itself, but also the fact that the simulated epidemics are generated under a parameter regime learned from a lower-detection setting.”</p>
+<p>While our case study model fit had no divergences, the simulation study had divergences across detection probabilities (see the first supplemental table in the appendix, <a href="#tbl-div-results" class="quarto-xref">Table&nbsp;2</a>). On average, there were low divergence rates across all detection probabilities, with higher rates at higher detection probabilities.</p>
+<p>Higher detection probabilities likely increased posterior curvature in the joint observation-process model, especially through the coupling between the ascertainment fraction and latent incident infections, leading to slightly more divergent transitions. The simulation study does not directly reuse latent EI trajectories from the Utah fit. Instead, it regenerates latent epidemics using Utah-calibrated process parameters drawn from a fit with estimated detection near p ≈ 0.15, and then varies the observation-level detection probability when simulating reported cases. As a result, some of the observed divergences may reflect not only higher detection probability itself, but also the fact that the simulated epidemics are generated under a parameter regime learned from a lower-detection setting.</p>
 <p>To visualize this geometry, we fixed a Utah-calibrated latent incidence trajectory and examined how the observation-model log posterior changed as the detection probability varied. We then introduced a simple diagnostic scaling factor <span class="math inline">\(\alpha\)</span> that multiplies the latent <span class="math inline">\(EI_{it}\)</span> trajectory while holding the remaining process quantities fixed. In this parameterization, <span class="math inline">\(\alpha=1\)</span> corresponds to the baseline latent incidence path and values away from 1 represent multiplicative perturbations to that path.</p>
-<p>The most useful summary is the cross-section in <span class="math inline">\(\alpha\)</span> at the generating detection probability. These curves show how quickly the relative log posterior falls as latent incident infections are perturbed away from the baseline trajectory. Narrower curves indicate stronger local curvature in the latent-incidence direction. In our diagnostic simulations, these cross-sections become progressively sharper as the generating detection probability increases, which is consistent with the idea that higher detection can tighten the joint observation geometry and make Hamiltonian trajectories harder to integrate without divergences.</p>
+<p>The most useful summary is the cross-section in <span class="math inline">\(\alpha\)</span> at the generating detection probability. These curves show how quickly the relative log posterior falls as latent incident infections are perturbed away from the baseline trajectory. Narrower curves indicate stronger local curvature in the latent-incidence direction. In our diagnostic simulations, these cross-sections become progressively sharper as the generating detection probability increases, which is consistent with the idea that higher detection can tighten the joint observation geometry and make Hamiltonian trajectories harder to integrate without divergences. Additional supporting surfaces for the full <span class="math inline">\((p,\alpha)\)</span> geometry are shown in the Divergence Summary section.</p>
 <div id="fig-curvature" class="quarto-figure quarto-figure-center quarto-float anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-curvature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -307,22 +311,11 @@ Figure&nbsp;1: Cross-sections of the relative log posterior in the latent-incide
 </figcaption>
 </figure>
 </div>
-<p>The full <span class="math inline">\((p,\alpha)\)</span> surfaces provide complementary context by showing the underlying ridge: larger detection probabilities can often be offset by smaller latent incidence, and vice versa. We view these surfaces as supporting diagnostics rather than the primary summary because the one-dimensional cross-sections are easier to compare directly across detection settings.</p>
-<div id="fig-curvature-surface" class="quarto-figure quarto-figure-center quarto-float anchored">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="detection_geometry_surfaces.png" class="img-fluid figure-img" style="width:100.0%">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Observation-model diagnostic surfaces over the detection probability <span class="math inline">\(p\)</span> and a global multiplier <span class="math inline">\(\alpha\)</span> on latent incident infections. The black point marks the generating value <span class="math inline">\((p,\alpha=1)\)</span> in each panel, and the red curve traces the local ridge in the observation-model geometry.
-</figcaption>
-</figure>
-</div>
 </section>
 <section id="covid-19-case-study-using-utah-data" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Covid-19 Case Study using Utah Data</h1>
 <p>Covid-19’s incubation period, during which individuals are infected but not infectious, cannot be captured by the standard SIR model (Susceptible–Infected–Recovered). As a result SEIR models (Susceptible–Exposed–Infected–Recovered), which allow for a pre-infectious incubation period, align more closely with Covid-19’s biology. As a result, these compartment models became the main models for Covid-19 projections during the pandemic <span class="citation" data-cites="yang2020modified">(<a href="#ref-yang2020modified" role="doc-biblioref">Yang et al. 2020</a>)</span>. Although the SEIR model leads to more accurate timing of outbreak progression by incorporating the pre-infectious latency period, it adds to the number of dynamics parameters that must be estimated without additional data supporting those estimations. Also, these models do not directly account for imperfect detection. Various models formulations, both stochastic and deterministic, have been devised to include compartments for both ascertained and un-ascertained infecteds, allowing for the estimation of under-ascertainment and differing rates of infectiousness of these compartments <span class="citation" data-cites="hao2020reconstruction chitwood2022reconstructing">(<a href="#ref-hao2020reconstruction" role="doc-biblioref">Hao et al. 2020</a>; <a href="#ref-chitwood2022reconstructing" role="doc-biblioref">Chitwood et al. 2022</a>)</span>.</p>
-<p>We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean disease ascertainment rate was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates show the effect of under-ascertainment on observed case counts (<a href="#fig-detection" class="quarto-xref">Figure&nbsp;3</a>). Our estimated disease ascertainment rate of 16% (90% CrI: 14% to 17%) is consistent with other early-pandemic under-ascertainment estimates, though direct comparison requires caution because target populations, time periods, and estimands differ. In Utah, <span class="citation" data-cites="havers2020seroprevalence">Havers et al. (<a href="#ref-havers2020seroprevalence" role="doc-biblioref">2020</a>)</span> estimated roughly 10.5 infections per reported case among adults statewide by early May 2020, implying a detection fraction near 9.5%, while <span class="citation" data-cites="samore2021probability">Samore et al. (<a href="#ref-samore2021probability" role="doc-biblioref">2021</a>)</span> estimated a 40% detection fraction in four urban Utah counties during May-June 2020. Nationally, <span class="citation" data-cites="chitwood2022reconstructing">Chitwood et al. (<a href="#ref-chitwood2022reconstructing" role="doc-biblioref">2022</a>)</span> estimated a median state-level ascertainment of 13.2% during March-May 2020. Our estimate of 16% is in line with these estimates, though differences in time periods, geographic scope, and methods make direct comparisons difficult.</p>
+<p>We fit the model to 30 weeks of data from 11 health districts in Utah. The overall posterior mean disease ascertainment rate was 0.16 (90% CrI: 0.14–0.17), indicating substantive under-ascertainment of infections during the study period. Weekly posterior estimates show the effect of under-ascertainment on observed case counts (<a href="#fig-detection" class="quarto-xref">Figure&nbsp;2</a>). Our estimated disease ascertainment rate of 16% (90% CrI: 14% to 17%) is consistent with other early-pandemic under-ascertainment estimates, though direct comparison requires caution because target populations, time periods, and estimands differ. In Utah, <span class="citation" data-cites="havers2020seroprevalence">Havers et al. (<a href="#ref-havers2020seroprevalence" role="doc-biblioref">2020</a>)</span> estimated roughly 10.5 infections per reported case among adults statewide by early May 2020, implying a detection fraction near 9.5%, while <span class="citation" data-cites="samore2021probability">Samore et al. (<a href="#ref-samore2021probability" role="doc-biblioref">2021</a>)</span> estimated a 40% detection fraction in four urban Utah counties during May-June 2020. Nationally, <span class="citation" data-cites="chitwood2022reconstructing">Chitwood et al. (<a href="#ref-chitwood2022reconstructing" role="doc-biblioref">2022</a>)</span> estimated a median state-level ascertainment of 13.2% during March-May 2020. Our estimate of 16% is in line with these estimates, though differences in time periods, geographic scope, and methods make direct comparisons difficult.</p>
 <p>The hierarchical AR(1) structure on log-beta captured changes in transmission intensity over time with an estimated mean (<span class="math inline">\(B_{it}\)</span>) of 0.11 (90% CrI: -0.05-0.27) and standard deviation (<span class="math inline">\(\sigma\)</span>) of 0.54 (90% CrI: 0.43-0.66). In addition to AR(1) correlated (<span class="math inline">\(\phi\)</span>=0.81 (90% CrI: 0.72-0.88)) transmission, we observed heterogeneity across health districts in timing of epidemic growth, driven by differences in exposure stage to infection stage with estimates between 0.26 and 0.87 and recovery rate between 0.2 and 0.68 between districts with beta-binomial overdispersion parameters of 0.01 (90% CrI: 0-0.01) and 0.77 (90% CrI: 0.43-0.98), respectively.</p>
 <p>Model diagnostics were favorable: no divergent transitions were observed and E-BFMI was within 0.1 of 1 for all chains. Together these results indicate a consistent signal of under-detection across Utah with temporal and spatial variation that our hierarchical model can capture.</p>
 <div id="fig-detection" class="quarto-figure quarto-figure-center quarto-float anchored">
@@ -331,7 +324,7 @@ Figure&nbsp;2: Observation-model diagnostic surfaces over the detection probabil
 <img src="utah_120525_bb.png" class="img-fluid figure-img" style="width:100.0%">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-detection-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
+Figure&nbsp;2: Weekly observed cases reported (black) and model estimated cases (blue) for Utah health district.
 </figcaption>
 </figure>
 </div>
@@ -344,19 +337,33 @@ Figure&nbsp;3: Weekly observed cases reported (black) and model estimated cases 
 <p>Our simulation study demonstrated the model’s ability to recover true parameters across varying detection probabilities, with improved performance at higher detection rates. While the case study fit showed no divergences, the simulation study revealed low divergence rates, particularly at higher detection probabilities.</p>
 <p>The beta-binomial transitions between compartments allowed for overdispersion in the transition process, capturing heterogeneity in transmission dynamics which can avoid overly-confident inference and absorb mild misspecification of the transition process. The estimate for the overdispersion parameter from S to E was very close to 0, implies that the binomial model was sufficient for that transition and that time to infection from exposure was consistent across time, which aligns with clinical understanding of Covid-19 infection. The overdispersion parameters for E to I and I to R were higher, indicating more variability in those transitions.</p>
 </section>
-<section id="notes" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Notes</h1>
+<section id="appendix-detection-geometry-diagnostic" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Appendix: Detection Geometry Diagnostic</h1>
+<p>As a supplementary diagnostic, we also examined the full observation-model surfaces over detection probability <span class="math inline">\(p\)</span> and a multiplicative scaling parameter <span class="math inline">\(\alpha\)</span> applied to the latent incident infection trajectory. These surfaces show the underlying tradeoff ridge: larger detection probabilities can often be offset by smaller latent incidence, and vice versa. We treat these surfaces as supportive context, while relying on the one-dimensional cross-sections in the main text for direct comparison across detection settings.</p>
+<div id="fig-curvature-surface" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="detection_geometry_surfaces.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Observation-model diagnostic surfaces over the detection probability <span class="math inline">\(p\)</span> and a global multiplier <span class="math inline">\(\alpha\)</span> on latent incident infections. The black point marks the generating value <span class="math inline">\((p,\alpha=1)\)</span> in each panel, and the red curve traces the local ridge in the observation-model geometry.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="notes" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Notes</h1>
 <p>End of April for draft ready to submit to Biometrics… Stats in Medicine Stats methods in medical research</p>
 <p>These are the first steps: Rob - Flesh out intro with information on SIR/SEIR/tSIR models in methods</p>
 <p>Rob - change the way we introduce the model</p>
 <p>Ben - Edit this part: Results re-organize so simulation is first and discuss parameters in case study relative to other studies</p>
 </section>
-<section id="appendix" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Appendix</h1>
-<section id="continuous-approximation-of-discrete-transitions" class="level2" data-number="7.1">
-<h2 data-number="7.1" class="anchored" data-anchor-id="continuous-approximation-of-discrete-transitions"><span class="header-section-number">7.1</span> Continuous Approximation of Discrete Transitions</h2>
-<section id="sec-inverse-logit" class="level3" data-number="7.1.1">
-<h3 data-number="7.1.1" class="anchored" data-anchor-id="sec-inverse-logit"><span class="header-section-number">7.1.1</span> Inverse Logit Calculation</h3>
+<section id="appendix" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Appendix</h1>
+<section id="continuous-approximation-of-discrete-transitions" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="continuous-approximation-of-discrete-transitions"><span class="header-section-number">8.1</span> Continuous Approximation of Discrete Transitions</h2>
+<section id="sec-inverse-logit" class="level3" data-number="8.1.1">
+<h3 data-number="8.1.1" class="anchored" data-anchor-id="sec-inverse-logit"><span class="header-section-number">8.1.1</span> Inverse Logit Calculation</h3>
 <p><span class="math display">\[
 \begin{aligned}
     \mathbb{E}\left[\frac{SE_t}{N}\right] &amp;= s_{t-1} (1 - \exp(-\beta i_{t-1})), &amp; \quad \text{Var}\left(\frac{SE_t}{N}\right) &amp;= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
@@ -423,8 +430,8 @@ Figure&nbsp;3: Weekly observed cases reported (black) and model estimated cases 
 \]</span></p>
 </section>
 </section>
-<section id="divergence-summary" class="level2" data-number="7.2">
-<h2 data-number="7.2" class="anchored" data-anchor-id="divergence-summary"><span class="header-section-number">7.2</span> Divergence Summary</h2>
+<section id="divergence-summary" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="divergence-summary"><span class="header-section-number">8.2</span> Divergence Summary</h2>
 <div class="cell" data-tbl-colwidths="[20,10,8,8,8,8,8]">
 <div id="tbl-div-results" class="cell quarto-float anchored">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -499,7 +506,21 @@ Percentile
 </figure>
 </div>
 </div>
+<section id="detection-geometry-diagnostic" class="level3" data-number="8.2.1">
+<h3 data-number="8.2.1" class="anchored" data-anchor-id="detection-geometry-diagnostic"><span class="header-section-number">8.2.1</span> Detection Geometry Diagnostic</h3>
+<p>To help interpret the divergence patterns, we also examined the full observation-model surfaces over detection probability <span class="math inline">\(p\)</span> and a multiplicative scaling parameter <span class="math inline">\(\alpha\)</span> applied to the latent incident infection trajectory. These surfaces show the underlying tradeoff ridge: larger detection probabilities can often be offset by smaller latent incidence, and vice versa. We treat these surfaces as supportive context, while relying on the one-dimensional cross-sections in the main text for direct comparison across detection settings.</p>
+<div id="fig-curvature-surface" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="detection_geometry_surfaces.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-curvature-surface-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Observation-model diagnostic surfaces over the detection probability <span class="math inline">\(p\)</span> and a global multiplier <span class="math inline">\(\alpha\)</span> on latent incident infections. The black point marks the generating value <span class="math inline">\((p,\alpha=1)\)</span> in each panel, and the red curve traces the local ridge in the observation-model geometry.
+</figcaption>
+</figure>
+</div>
 
+</section>
 </section>
 </section>
 
