@@ -87,41 +87,43 @@ Section 4 applies our model to COVID-19 data from the first year of the COVID-19
 ## Discrete-time discete state space transmission model
 
 Let $y_{g,t}$ be the number of cases of a specific infectious disease recorded by a public health agency associated with a geography $g$ at time step $t$.
-We assume these realized cases represent a fraction of total incident cases, which are generated as increments in the underlying discrete-time stochastic transmission process.
+We assume these realized cases represent a fraction of total incident cases, which are generated as increments in the underlying discrete-time stochastic compartment model.
 This transmission process follows a stochastic susceptible-exposed-infected-removed (SEIR) model; we adapt notation developed in @fintziLinearNoiseApproximation2022 to discrete time. 
-The SEIR model is characterized as a multivariate counting process $\mathbf{N}_t$, comprising cumulative counts of movement of individuals in a population of size $N_{S,0}$ from susceptible-to-exposed (SE), exposed-to-infected (EI), and exposed-to-removed (IR):
+The SEIR model is characterized as a discrete state Markov chain with state $\mathbf{X}_{g,t} = (S_{g,t}, E_{g,t}, I_{g,t}, R_{g,t})$, representing the number of individuals in the states susceptible (S), exposed (E), infected (I), and removed (R) in a population of size ${S}_{g,0}$.
+
+Movements between these states are tracked via a multivariate counting process for each geography and time step, $\mathbf{N}_{g,t}$, comprising cumulative counts from time $0$ through time step $t$ of movements of individuals between compartments:
 $$
 \mathbf{N}_{g,t} = \left(N^{SE}_{g,t}, N^{EI}_{g,t}, N^{IR}_{g,t} \right)
 $$
-This counting process arises as the result of increments $\Delta \mathbf{N}_{g,t}$ added to an initial state $\mathbf{N}_{g,0}$:
+The movements between time step $t-1$ to $t$ are collected in a vector $\Delta \mathbf{N}_{g,t}$, which collects the transitions susceptible-to-exposed (SE), exposed-to-infected (EI), and exposed-to-removed (IR):
+$$
+\Delta\mathbf{N}_{g,t} = \left(\Delta N^{SE}_{g,t}, \Delta N^{EI}_{g,t},\Delta N^{IR}_{g,t} \right)
+$$
+These increments are necessarily non-negative integers, though in contrast to a continuous time model these increments may be larger than $1$.  
+Then we can write, $\mathbf{N}_{g,t}$ as an initial state $\mathbf{N}_{g,0}$ and sums of increments $\Delta \mathbf{N}_{g,t}$:
 $$
 \begin{aligned}
 \mathbf{N}_{g,t} & = \mathbf{N}_{g,0} + \sum_{j=1}^t \Delta \mathbf{N}_{g,t}
 \end{aligned}
 $$
-These increments are necessarily non-negative integers, though in contrast to a continuous time model these increments may be larger than $1$.  
 
-In order to account for unobserved heterogeneity in susceptibility and exposure, we assume that elements of the vector $\mathbf{N}_{g,t}$ are distributed as beta-binomial random variables:
+In order to complete our model specification, we need to determine distributions for each transition. 
+Following the convention from endemic/epidemic models, introduced in @2005-Held-Surveillance-Counts, we assume there are $S_{g,t-1}$ susceptible individuals that are subjected to a force of infection $\beta_{g,t} I_{g,t - 1} / S_{g,0}$, such that the number of incident cases conditional on $S_{g,t-1}, I_{g,t-1}$ and $\beta_{g,t}$, are binomial random variables:
+$$
+\Delta N^{SE}_{g,t} \sim \text{Binomial}\!\Bigl(S_{g,t-1},\,1 - \exp\!\bigl(-\tfrac{\beta_{g,t}I_{g,t-1}}{S_{g,0}}\bigr)\Bigr)
+$$
+Contact rate and susceptibility may be local to time and geography, and thus we allow these to change by geography and time in order to capture systematic variation.
+
+In order to account for unobservable individual heterogeneity, we assume that $\Delta N^{EI}_{g,t}$ and $\Delta N^{IR}_{g,t}$ are distributed as beta-binomial random variables: 
 $$
 \begin{aligned}
-SE_{it} &\sim \text{Binomial}\!\Bigl(S_{it-1},\,1 - \exp\!\bigl(-\tfrac{\beta_{it}I_{it-1}}{N}\bigr)\Bigr),\\
-EI_{it} &\sim \text{BetaBinomial}\!\bigl(E_{it-1},\,1 - \exp(-\eta_i),\rho_{EI}\bigr),\\
-IR_{it} &\sim \text{BetaBinomial}\!\bigl(I_{it-1},\,1 - \exp(-\gamma_i),\rho_{IR}\bigr),\\
-S_{it} &= S_{it-1} - SE_{it},\\
-E_{it} &=
-  \begin{cases}
-    SE_{it}, & t = f_i + 1,\\
-    E_{it-1} + SE_{it} - EI_{it}, & t > f_i + 1
-  \end{cases}\\
-I_{it} &= I_{it-1} + EI_{it} - IR_{it},\\
-ii_{it} &\sim \text{Binomial}\!\bigl(EI_{it},\,p\bigr).
+\Delta N^{EI}_{g,t} &\sim \text{BetaBinomial}\!\left(E_{g,t-1},\,1 - \exp(-\eta_g),\rho_{EI}\right),\\
+\Delta N^{IR}_{g,t} &\sim \text{BetaBinomial}\!\left(I_{g,t-1},\,1 - \exp(-\gamma_g),\rho_{IR}\right),\\
 \end{aligned}
 $$
+In the definitions above, we use the parameterization $Z \sim \text{BetaBinomial}(\mu, \rho)$, where $\mathbb{E}[Z] = \mu$ and $\text{Var}(Z) = \mu (1 - \mu) / (\rho + 1)$. 
 
-
-Then incident cases are denoted $\Delta N^{EI}_{g,t} = N^{EI}_{g,t} - N^{EI}_{g,t - 1}$ and $y_{g,t} \sim \text{Binomial}(\Delta N^{EI}_{g,t}, p)$.
-
-In order to complete our model, we need to model changes between compartments, which we denote $\Delta N^{SE}_{g,t}$
+Finally, incident cases are $y_{g,t}$ are assumed to be binomial conditional on $\Delta N^{EI}_{g,t}$ and an unknown reporting probability:  $y_{g,t} \sim \text{Binomial}(\Delta N^{EI}_{g,t}, p)$.
 
 
 We fit a stochastic model on weekly new case counts across 11 health districts in Utah based on the SEIR (Susceptible–Exposed–Infected–Removed) compartmental model used to simulate Covid-19 infections. Given the complexity of Covid-19 case report data due to shifting policy and safety precautions, our approach required flexibility in the dynamics between compartments over time and in space. Specifically, we fit a model which allowed the force of infection to change over time and for it and the rate of movement between E and I compartments and I and R compartments to differ between districts. Finally, our model does not assume that the dynamics in the SEIR compartmental model start at the same time as cases reported in Utah at the district level do not start in the same week.
