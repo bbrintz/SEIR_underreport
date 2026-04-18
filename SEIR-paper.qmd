@@ -125,8 +125,99 @@ In the definitions above, we use the parameterization $Z \sim \text{BetaBinomial
 
 Finally, incident cases are $y_{g,t}$ are assumed to be binomial conditional on $\Delta N^{EI}_{g,t}$ and an unknown reporting probability:  $y_{g,t} \sim \text{Binomial}(\Delta N^{EI}_{g,t}, p)$.
 
+While this model represents a plausible model for infectious disease transmission, integrating over the large unobservable state space of $\Delta \mathbf{N}_{g,t}$ would result in a combinatorial explosion. 
+In the next section, we present a tractable continuous approximation to this process.
 
-We fit a stochastic model on weekly new case counts across 11 health districts in Utah based on the SEIR (Susceptible–Exposed–Infected–Removed) compartmental model used to simulate Covid-19 infections. Given the complexity of Covid-19 case report data due to shifting policy and safety precautions, our approach required flexibility in the dynamics between compartments over time and in space. Specifically, we fit a model which allowed the force of infection to change over time and for it and the rate of movement between E and I compartments and I and R compartments to differ between districts. Finally, our model does not assume that the dynamics in the SEIR compartmental model start at the same time as cases reported in Utah at the district level do not start in the same week.
+<!-- We fit a stochastic model on weekly new case counts across 11 health districts in Utah based on the SEIR (Susceptible–Exposed–Infected–Removed) compartmental model used to simulate Covid-19 infections. Given the complexity of Covid-19 case report data due to shifting policy and safety precautions, our approach required flexibility in the dynamics between compartments over time and in space. Specifically, we fit a model which allowed the force of infection to change over time and for it and the rate of movement between E and I compartments and I and R compartments to differ between districts. Finally, our model does not assume that the dynamics in the SEIR compartmental model start at the same time as cases reported in Utah at the district level do not start in the same week. -->
+
+## Continuous approximation to discrete state space
+
+The key challenge in approximating the above process is that we must contend with bounds on all increments in order to preserve the mass action that is the raison d'&#234;tre of compartment modeling.
+First, we move to proportions instead of counts, which is similar in spirit to the approach taken in @zhouSpatiotemporalEpidemiologicalPrediction2020. 
+Let $\mathbf{x}_{g,t} = (s_{g,t}, e_{g,t}, i_{g,t}, r_{g,t})$ represent the proportions of the population that fall into each compartment.
+Further, let $\boldsymbol{\pi}_{g,t}$, with elements $(\pi^{SE}_{g,t},\pi^{EI}_{g,t},\pi^{IR}_{g,t})$ represent the proportions of the population represented by the increment $\Delta \mathbf{N}_{g,t}$, or $\boldsymbol{\pi}_{g,t} = \Delta \mathbf{N}_{g,t} / S_{g,0}$.
+
+We approximate the distribution of each element 
+
+$$
+\begin{aligned}
+    \mathbb{E}\left[\frac{SE_t}{N}\right] &= s_{t-1} (1 - \exp(-\beta i_{t-1})), & \quad \text{Var}\left(\frac{SE_t}{N}\right) &= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}\left[\frac{EI_t}{N}\right] &= e_{t-1} (1 - \exp(-\eta)), & \quad \text{Var}\left(\frac{EI_t}{N}\right) &= \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}\left[\frac{IR_t}{N}\right] &= i_{t-1} (1 - e^{-\gamma}), & \quad \text{Var}\left(\frac{IR_t}{N}\right) &= \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+$$
+
+Let $se_t$, $ei_t$, and $ir_t$ be random variables with bounds $[0, s_{t-1}]$, $[0, e_{t-1}]$, and $[0, i_{t-1}]$, respectively.
+We need to find $u_t$, $v_t$, and $w_t$ distributed on $[0, 1]$ such that $se_t = u_t s_{t-1}$, $ei_t = v_t e_{t-1}$, and $ir_t = i_{t-1} w_t$ with the same mean and variance.
+
+$$
+\begin{aligned}
+    \mathbb{E}[s_{t-1} u_t] &= s_{t-1} \mathbb{E}[u_t] = s_{t-1}(1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(s_{t-1} u_t) &= s_{t-1}^2 \text{Var}(u_t) = \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[e_{t-1} v_t] &= e_{t-1} \mathbb{E}[v_t] = e_{t-1}(1 - \exp(-\eta)) \\
+    \text{Var}(e_{t-1} v_t) &= e_{t-1}^2 \text{Var}(v_t) = \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[i_{t-1} w_t] &= i_{t-1} \mathbb{E}[w_t] = i_{t-1}(1 - e^{-\gamma}) \\
+    \text{Var}(i_{t-1} w_t) &= i_{t-1}^2 \text{Var}(w_t) = \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+$$
+
+Solving for $\mathbb{E}[u_t]$, $\text{Var}(u_t)$, $\mathbb{E}[v_t]$, $\text{Var}(v_t)$, $\mathbb{E}[w_t]$, and $\text{Var}(w_t)$ implies
+
+$$
+\begin{aligned}
+    \mathbb{E}[u_t] &= (1 - \exp(-\beta i_{t-1})) \\
+    \text{Var}(u_t) &= \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+    \mathbb{E}[v_t] &= (1 - \exp(-\eta)) \\
+    \text{Var}(v_t) &= \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+    \mathbb{E}[w_t] &= (1 - e^{-\gamma}) \\
+    \text{Var}(w_t) &= \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+$$
+
+What we could do is to take $\tilde{u}_t$, $\tilde{v}_t$, $\tilde{w}_t \sim \text{Normal}$ and let $u_t = \text{inv\_logit}(\tilde{u}_t)$, $v_t = \text{inv\_logit}(\tilde{v}_t)$, and $w_t = \text{inv\_logit}(\tilde{w}_t)$.
+
+The downside of this approach is that the expectation of the inverse logit of a normal does not have an analytic form, but we could approximate with the Delta method.
+Let 
+
+$$
+\tilde{u}_t \sim \text{Normal}(\mu_u, \sigma^2_u), \tilde{v}_t \sim \text{Normal}(\mu_v, \sigma^2_v), \tilde{w}_t \sim \text{Normal}(\mu_w, \sigma^2_w).
+$$
+
+We need to find $\mu_u$, $\sigma^2_u$, $\mu_v$, $\sigma^2_v$, $\mu_w$, $\sigma^2_w$ such that 
+
+$$
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx (1 - \exp(-\beta i_{t-1})), &\quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx (1 - \exp(-\eta)), \quad & \text{Var}(\text{expit}(\tilde{v}_t)) \approx \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx (1 - e^{-\gamma}), \quad & \text{Var}(\text{expit}(\tilde{w}_t)) \approx \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
+\end{aligned}
+$$
+
+Using the delta method gives that 
+
+$$
+\begin{aligned}
+\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx \text{expit}(\mu_u), & \quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \sigma_u^2 (\text{expit}(\mu_u)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx \text{expit}(\mu_v), & \quad \text{Var}(\text{expit}(\tilde{v}_t)) \approx \sigma_v^2 (\text{expit}(\mu_v)^\prime)^2 \\
+\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx \text{expit}(\mu_w), &\quad \text{Var}(\text{expit}(\tilde{w}_t)) \approx \sigma_w^2 (\text{expit}(\mu_w)^\prime)^2
+\end{aligned}
+$$
+
+This leads to the following parameters:
+
+$$
+\begin{aligned}
+    \mu_u &= \text{logit}(1 - \exp(-\beta i_{t-1}))  \\
+    \sigma_u^2 &= \frac{1}{s_{t-1} N} \frac{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1}))}{((1 - \text{expit}(\mu_u))\text{expit}(\mu_u))^2} \\
+    &= \frac{1}{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) s_{t-1} N} \\
+    \mu_v &= \text{logit}(1 - \exp(-\eta))  \\
+    \sigma_v^2 &= \frac{1}{e_{t-1} N} \frac{\exp(-\eta)(1 - \exp(-\eta))}{((1 - \text{expit}(\mu_v))\text{expit}(\mu_v))^2} \\
+    &= \frac{1}{\exp(-\eta)(1 - \exp(-\eta)) e_{t-1} N} \\
+    \mu_w &= \text{logit}(1 - e^{-\gamma})  \\
+    \sigma_w^2 &= \frac{1}{i_{t-1} N} \frac{e^{-\gamma}(1 - e^{-\gamma}))}{((1 - \text{expit}(\mu_w))\text{expit}(\mu_w))^2} \\
+    &= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
+\end{aligned}
+$$
 
 ## Model Formulation
 
@@ -285,88 +376,6 @@ Ben - Edit this part: Results re-organize so simulation is first and discuss par
 
 # Appendix
 
-## Continuous Approximation of Discrete Transitions
-
-### Inverse Logit Calculation {#sec-inverse-logit}
-$$
-\begin{aligned}
-    \mathbb{E}\left[\frac{SE_t}{N}\right] &= s_{t-1} (1 - \exp(-\beta i_{t-1})), & \quad \text{Var}\left(\frac{SE_t}{N}\right) &= \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}\left[\frac{EI_t}{N}\right] &= e_{t-1} (1 - \exp(-\eta)), & \quad \text{Var}\left(\frac{EI_t}{N}\right) &= \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}\left[\frac{IR_t}{N}\right] &= i_{t-1} (1 - e^{-\gamma}), & \quad \text{Var}\left(\frac{IR_t}{N}\right) &= \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-$$
-
-Let $se_t$, $ei_t$, and $ir_t$ be random variables with bounds $[0, s_{t-1}]$, $[0, e_{t-1}]$, and $[0, i_{t-1}]$, respectively.
-We need to find $u_t$, $v_t$, and $w_t$ distributed on $[0, 1]$ such that $se_t = u_t s_{t-1}$, $ei_t = v_t e_{t-1}$, and $ir_t = i_{t-1} w_t$ with the same mean and variance.
-
-$$
-\begin{aligned}
-    \mathbb{E}[s_{t-1} u_t] &= s_{t-1} \mathbb{E}[u_t] = s_{t-1}(1 - \exp(-\beta i_{t-1})) \\
-    \text{Var}(s_{t-1} u_t) &= s_{t-1}^2 \text{Var}(u_t) = \frac{s_{t-1}}{N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}[e_{t-1} v_t] &= e_{t-1} \mathbb{E}[v_t] = e_{t-1}(1 - \exp(-\eta)) \\
-    \text{Var}(e_{t-1} v_t) &= e_{t-1}^2 \text{Var}(v_t) = \frac{e_{t-1}}{N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}[i_{t-1} w_t] &= i_{t-1} \mathbb{E}[w_t] = i_{t-1}(1 - e^{-\gamma}) \\
-    \text{Var}(i_{t-1} w_t) &= i_{t-1}^2 \text{Var}(w_t) = \frac{i_{t-1}}{N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-$$
-
-Solving for $\mathbb{E}[u_t]$, $\text{Var}(u_t)$, $\mathbb{E}[v_t]$, $\text{Var}(v_t)$, $\mathbb{E}[w_t]$, and $\text{Var}(w_t)$ implies
-
-$$
-\begin{aligned}
-    \mathbb{E}[u_t] &= (1 - \exp(-\beta i_{t-1})) \\
-    \text{Var}(u_t) &= \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-    \mathbb{E}[v_t] &= (1 - \exp(-\eta)) \\
-    \text{Var}(v_t) &= \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
-    \mathbb{E}[w_t] &= (1 - e^{-\gamma}) \\
-    \text{Var}(w_t) &= \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-$$
-
-What we could do is to take $\tilde{u}_t$, $\tilde{v}_t$, $\tilde{w}_t \sim \text{Normal}$ and let $u_t = \text{inv\_logit}(\tilde{u}_t)$, $v_t = \text{inv\_logit}(\tilde{v}_t)$, and $w_t = \text{inv\_logit}(\tilde{w}_t)$.
-
-The downside of this approach is that the expectation of the inverse logit of a normal does not have an analytic form, but we could approximate with the Delta method.
-Let 
-
-$$
-\tilde{u}_t \sim \text{Normal}(\mu_u, \sigma^2_u), \tilde{v}_t \sim \text{Normal}(\mu_v, \sigma^2_v), \tilde{w}_t \sim \text{Normal}(\mu_w, \sigma^2_w).
-$$
-
-We need to find $\mu_u$, $\sigma^2_u$, $\mu_v$, $\sigma^2_v$, $\mu_w$, $\sigma^2_w$ such that 
-
-$$
-\begin{aligned}
-\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx (1 - \exp(-\beta i_{t-1})), &\quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \frac{1}{s_{t-1} N} \exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) \\
-\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx (1 - \exp(-\eta)), \quad & \text{Var}(\text{expit}(\tilde{v}_t)) \approx \frac{1}{e_{t-1} N} \exp(-\eta)(1 - \exp(-\eta)) \\
-\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx (1 - e^{-\gamma}), \quad & \text{Var}(\text{expit}(\tilde{w}_t)) \approx \frac{1}{i_{t-1} N} e^{-\gamma}(1 - e^{-\gamma})
-\end{aligned}
-$$
-
-Using the delta method gives that 
-
-$$
-\begin{aligned}
-\mathbb{E}[\text{expit}(\tilde{u}_t)] \approx \text{expit}(\mu_u), & \quad \text{Var}(\text{expit}(\tilde{u}_t)) \approx \sigma_u^2 (\text{expit}(\mu_u)^\prime)^2 \\
-\mathbb{E}[\text{expit}(\tilde{v}_t)] \approx \text{expit}(\mu_v), & \quad \text{Var}(\text{expit}(\tilde{v}_t)) \approx \sigma_v^2 (\text{expit}(\mu_v)^\prime)^2 \\
-\mathbb{E}[\text{expit}(\tilde{w}_t)] \approx \text{expit}(\mu_w), &\quad \text{Var}(\text{expit}(\tilde{w}_t)) \approx \sigma_w^2 (\text{expit}(\mu_w)^\prime)^2
-\end{aligned}
-$$
-
-This leads to the following parameters:
-
-$$
-\begin{aligned}
-    \mu_u &= \text{logit}(1 - \exp(-\beta i_{t-1}))  \\
-    \sigma_u^2 &= \frac{1}{s_{t-1} N} \frac{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1}))}{((1 - \text{expit}(\mu_u))\text{expit}(\mu_u))^2} \\
-    &= \frac{1}{\exp(-\beta i_{t-1})(1 - \exp(-\beta i_{t-1})) s_{t-1} N} \\
-    \mu_v &= \text{logit}(1 - \exp(-\eta))  \\
-    \sigma_v^2 &= \frac{1}{e_{t-1} N} \frac{\exp(-\eta)(1 - \exp(-\eta))}{((1 - \text{expit}(\mu_v))\text{expit}(\mu_v))^2} \\
-    &= \frac{1}{\exp(-\eta)(1 - \exp(-\eta)) e_{t-1} N} \\
-    \mu_w &= \text{logit}(1 - e^{-\gamma})  \\
-    \sigma_w^2 &= \frac{1}{i_{t-1} N} \frac{e^{-\gamma}(1 - e^{-\gamma}))}{((1 - \text{expit}(\mu_w))\text{expit}(\mu_w))^2} \\
-    &= \frac{1}{e^{-\gamma}(1 - e^{-\gamma})) i_{t-1} N}
-\end{aligned}
-$$
 
 ## Divergence Summary
 
