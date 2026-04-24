@@ -137,8 +137,10 @@ First, we move to proportions instead of counts, which is similar in spirit to t
 Let $\mathbf{x}_{g,t} = (s_{g,t}, e_{g,t}, i_{g,t}, r_{g,t})$ represent the proportions of the population that fall into each compartment.
 Further, let $\boldsymbol{\pi}_{g,t}$, with elements $(\pi^{SE}_{g,t},\pi^{EI}_{g,t},\pi^{IR}_{g,t})$ represent the proportions of the population represented by the increment $\Delta \mathbf{N}_{g,t}$, or $\boldsymbol{\pi}_{g,t} = \Delta \mathbf{N}_{g,t} / S_{g,0}$.
 
-Note that by construction, $\pi^{SE}_{g,t},\pi^{EI}_{g,t},\pi^{IR}_{g,t}$ are bounded in the intervals $[0,s_{g,t-1}], [0, e_{g,t-1}], [0, i_[g,t-1]]$ respectively.
-We can respect these bounds by creating scale-free latent variables $u^{SE}_{g,t},u^{EI}_{g,t},u^{IR}_{g,t}$ each bounded in $[0,1]$
+Crucially, $\pi^{SE}_{g,t},\pi^{EI}_{g,t},\pi^{IR}_{g,t}$ must be bounded in the intervals $[0,s_{g,t-1}], [0, e_{g,t-1}], [0, i_[g,t-1]]$ respectively, to faithfully approximate the counting process.
+We enforce these bounds by creating latent variables $u^{SE}_{g,t},u^{EI}_{g,t},u^{IR}_{g,t}$ in $[0,1]$ and set $\pi^{SE}_{g,t} = u^{SE}_{g,t}s_{g,t}$,  $\pi^{EI}_{g,t} = u^{EI}_{g,t}e_{g,t}$, and $\pi^{IR}_{g,t} = u^{IR}_{g,t}i_{g,t}$.
+
+The priors we use on the latent variables approximate the 
 
 $$
 \begin{aligned}
