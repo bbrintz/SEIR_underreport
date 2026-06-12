@@ -44,7 +44,7 @@ dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(name
 dplyr::select(-date)
 d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10_floatvar.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
@@ -108,32 +108,38 @@ set.seed(123)
 # No e0 
 # Calculate I0, but get rid of V_t at first time point 
 # First time point, I0 is EI so use I0 for detection thing
-fit = tt$sample(data = dat, chains = 4,
-                 adapt_delta = 0.95,
+
+out_dir <- "/private/tmp/seir_underreport_tst_folder_sig"
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+fit = tt$sample(data = dat, chains = 1,
+                 adapt_delta = 0.99,
                  max_treedepth = 14,
                  init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
                                   raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
+                                  sig_obs=runif(1, .1, .25),
                                   #log_phi_p = rnorm(1,4,1),
                                   p_raw = runif(1, -.25,.25),
+                                  log_obs_cv = rnorm(1, log(0.12), 0.2),
                                   #kappa = runif(1, 0,1),
                                   v_raw=runif(1,1.5,2.5),
                                   z=rnorm(TT-min(first) + 1,0,.25),
                                   mu_log_beta = rnorm(1, 0, .05),
                                   sigma = runif(1, .1, .25),
-                                  sig_beta = runif(1, .1,.25),
+                                  sig_beta = runif(1, .02,.08),
                                   i0_raw = runif(N_C,-9,-7),#rbeta(N_C, 0.01*50, 0.99*50),
                                   #rho_si = runif(1, 0.0001, 0.005),
-                                  rho_ei_raw = runif(1, -0.1, 0.1),
+                                  rho_ei_raw = rnorm(1, qlogis(0.2), 0.2),
                                   rho_ir_raw = runif(1, -0.1, 0.1),
-                                  gamma_raw = runif(N_C, 0,.5),
-                                  eta_raw = runif(N_C,.25,.75))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
+                                  gamma_raw = rnorm(N_C, qlogis(0.75), 0.2),
+                                  eta_raw = rnorm(N_C, qlogis(0.75), 0.2))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
                  iter_warmup = 500,#1500,
-                 iter_sampling = 500, parallel_chains = 4,
-                 output_dir = paste0(getwd(),"/tst_folder_sig/"),
-                 step_size=.0009
+                 iter_sampling = 500, parallel_chains = 1,
+                 output_dir =out_dir,
+                 #step_size=.0009
                  )
 
 
@@ -161,10 +167,12 @@ np_fit %>%
   group_by(Chain) %>%
   summarize(median_stepsize = median(Value), .groups="drop")
 
-mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","i0","mu_log_beta")), np = np_fit, pars = c("p","phi","sigma","sig_beta","mu_log_beta","i0[1]"),
+mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","obs_cv","i0[1]","i0[2]")), np = np_fit, pars = c("p","sigma","sig_beta","obs_cv","i0[1]","i0[2]"),
                   off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
+
+new_csv=paste0(getwd(),"/tst_folder_sig/","SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10_neg_bin-202605120836-1-7817cc.csv")
 
 #fit <- read_cmdstan_csv(new_csv)
 fit=as_cmdstan_fit(new_csv)
@@ -346,7 +354,7 @@ group_by(n1) %>% summarize(value=mean(value)) %>% ungroup() %>% mutate(n1=as.num
 ggplot(aes(y=value,x=n1)) + geom_point()
 ggsave(utah_gamma_020325.png)
 
-z_t_d <- fit1$draws("ei_t", format = "draws_array") |> posterior::as_draws_rvars()
+z_t_d <- fit$draws("ei_t", format = "draws_array") |> posterior::as_draws_rvars()
 z_t_d <- z_t_d$ei_t
 qpt025 <- quantile(z_t_d,0.025)
 qpt975 <- quantile(z_t_d,0.975)
