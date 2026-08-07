@@ -8,48 +8,50 @@ library(here)
 
 #set working directory to current file path
 case = read_csv("./data/time_series_covid19_confirmed_US.csv") %>% filter(`Province_State`=="Utah")
-test = read_csv("./data/time_series_covid19_US_testing_by_state.csv") %>% filter(state=="UT")
-vax = read_csv("./data/COVID-19_Vaccinations_in_the_United_States_County.csv") %>% filter(Recip_State=="UT")
-test=test %>% mutate(date=mdy(date)) %>% arrange(date) %>% dplyr::select(date,tests_combined_total)
-vax=vax %>% mutate(date=mdy(Date)) %>% arrange(date) %>% dplyr::select(date,vax=Series_Complete_Yes) %>% 
-  group_by(date) %>% summarize(vax=sum(vax))
 
 case=case %>% dplyr::select(-c(1:5,7:11)) %>% gather("date","cases",-Admin2) %>% mutate(date=mdy(date)) %>% group_by(Admin2,date) %>% summarize(cases=sum(as.numeric(cases)))
-case=case %>% ungroup() %>% mutate(date=(date = 7 * (as.numeric(date - min(date)) %/% 7) + min(date))) %>% 
-  group_by(date,Admin2) %>% summarize(cases=sum(cases)) %>%#,tests=sum(tests_combined_total-lag(tests_combined_total),na.rm=T))#,
-                               #vax=sum(vax-lag(vax),na.rm=T))
-                               #filter(date>=ymd("2020-04-15")) %>% 
-                               filter(date<ymd("2021-06-02"))
-                               #filter(date>=ymd("2020-10-06")) %>% filter(date<ymd("2021-02-02"))
 
 
-case=case %>% group_by(Admin2) %>% mutate(new_cases=cases-lag(cases)) %>% arrange(Admin2,date) %>% filter(!is.na(new_cases))# %>% filter(Admin2 %in% readRDS("final_counties.rds")) %>%# filter(any(cases>1000)) %>%
-#saveRDS(unique(dat_final$Admin2),"final_counties.rds")
+case <- case %>%
+  ungroup() %>%
+  mutate(
+    week = min(date) +
+      7 * (as.numeric(date - min(date)) %/% 7)
+  ) %>%
+  arrange(Admin2, date) %>%
+  group_by(Admin2, week) %>%
+  summarize(
+    cases = last(cases),
+    .groups = "drop"
+  ) %>%
+  rename(date = week) %>%
+  filter(date < ymd("2021-06-02")) %>%
+  group_by(Admin2) %>%
+  arrange(date, .by_group = TRUE) %>%
+  mutate(new_cases = cases - lag(cases)) %>%
+  filter(!is.na(new_cases))
 
 
 dat_final=case %>% filter(Admin2 %in% readRDS("final_counties.rds"))#group_by(Admin2) %>% filter(any(cases>100))
 pop=read_csv("./data/utah_counties_pop_coord.csv") %>% arrange(desc(Population_2020))
 
 # get the distance between each county (Admin2) in dat_final
-dist=matrix(0,nrow=length(unique(dat_final$Admin2)),ncol=length(unique(dat_final$Admin2)))
-for(i in 1:12){
-  for(j in 1:12){
-    dist[i,j]=geosphere::distHaversine(as.matrix(pop %>% dplyr::select(lon=Longitude,lat=Latitude))[c(i,j),])/1000
-  }
-} 
+
 
 d1=dat_final %>% filter(date<ymd("2020/8/19")) %>% 
 ungroup() %>% rename(County="Admin2") %>% left_join(pop,by="County") %>% arrange(desc(Population_2020),date) %>%
 dplyr::select(-Population_2020,-Latitude,-Longitude,-cases) %>% pivot_wider(names_from=County,values_from=new_cases) %>%
 dplyr::select(-date)
-d1[6,9]=1
 
-tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v12_neg_bin.stan")#cmdstan_model("SEIR_betabin_vary_beta_nospat.stan")#"stoch_beta_spatial_SI_utah_betabin.stan")
+# Retain the v12 correction for the Southeast Utah downward count revision.
+d1[14,12] = 1
+
+tt <- cmdstan_model("SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v14_pois.stan")
 
 
 #d1=d1 %>% dplyr::select(`Salt Lake`,Utah,Davis,`Weber-Morgan`)
 
-TT = nrow(d1)+1
+    TT = nrow(d1)+1
 
 #1,2,3,8 for 4 counties # dist/10
 counties=c(1,2,3,4,5,6,7,8,10,11,12) # dist/10
@@ -59,86 +61,47 @@ N_C = length(counties)#ncol(d1)
 ii=as.matrix(d1)[,counties]
 
 first=apply(matrix(as.numeric(as.matrix(d1)[,counties]!=0),ncol=N_C),2,function(x) which(x==1)[1])
-last<- unlist(1:N_C %>% purrr::map(function(col) {
-  w <- which(ii[,col] == 0)
-  w=w[which(w>first[col])][1]-1
-  w=ifelse(is.na(w),TT-1,w)
-}))
+
 dat <- 
   list(
-    t0 = min(first), 
-    ii = as.matrix(d1)[,counties],
+    ii = ii,
     TT = TT,
     N_C = N_C,
     pop_size = pop$Population_2020[counties],
-    D=dist[counties,counties]/10,
-    first=first,
-    last=last,
-    min_first=min(first),
-    N_wks_per_period=3
+    first = first,
+    N_wks_per_period = 30L
   )
 
 # save list as json
 
-#write_json(dat, "dat.json", auto_unbox = TRUE)
-dat$ii %>% as_tibble %>% gather(County,Cases) %>% mutate(date=rep(1:(TT-1),N_C),first=rep(first,each=TT-1)) %>% 
-  ggplot(aes(x=date,y=Cases)) + geom_line() + geom_vline(aes(xintercept=first),color="red") + facet_wrap(~County,scales="free_y") + theme_bw() + ylab("New Cases") + xlab("Date")
-
-? cmdstanr::cmdstan_model
-
-set.seed(123)
-#write_json(list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  # v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  # w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
-                                  # #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
-                                  # raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
-                                  # #log_phi_p = rnorm(1,4,1),
-                                  # p_raw = runif(1, -.25,.25),
-                                  # #kappa = runif(1, 0,1),
-                                  # v_raw=runif(1,1.5,2.5),
-                                  # z=rnorm(TT-min(first) + 1,0,.25),
-                                  # mu_log_beta = rnorm(1, 0, .05),
-                                  # sigma = runif(1, .1, .25),
-                                  # sig_beta = runif(1, .1,.25),
-                                  # i0_raw = runif(N_C,-9,-7),#rbeta(N_C, 0.01*50, 0.99*50),
-                                  # #rho_si = runif(1, 0.0001, 0.005),
-                                  # rho_ei_raw = runif(1, -0.1, 0.1),
-                                  # rho_ir_raw = runif(1, -0.1, 0.1),
-                                  # gamma_raw = runif(N_C, 0,.5),
-                                  # eta_raw = runif(N_C,.25,.75)),"inits.json",auto_unbox=TRUE)
-# No e0 
-# Calculate I0, but get rid of V_t at first time point 
-# First time point, I0 is EI so use I0 for detection thing
-
-out_dir <- "/private/tmp/seir_underreport_tst_folder_sig"
+out_dir <- "/private/tmp/seir_underreport_v14_pois_hier_e0"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-fit = tt$sample(data = dat, chains = 1,
-                 adapt_delta = 0.99,
+fit = tt$sample(data = dat, chains = 4,
+                 adapt_delta = 0.9,
                  max_treedepth = 14,
                  init = \() {list(u_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   v_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   w_t_logit_eta = matrix(rnorm(TT*N_C, 0,1), TT, N_C),
                                   #raw_log_beta_mat = matrix(runif(TT*N_C, -1, 1), TT, N_C),#matrix(rnorm(TT*N_C, 0, 1), TT, N_C),
-                                  raw_log_beta = rnorm(sum(dat$last - dat$first + 1)),
-                                  sig_obs=runif(1, .1, .25),
-                                  #log_phi_p = rnorm(1,4,1),
-                                  p_raw = runif(1, -.25,.25),
-                                  log_obs_cv = rnorm(1, log(0.12), 0.2),
+                                  raw_log_beta = rnorm(sum(TT - first)),
+                                  eta_p_time = rlogis(ceiling((TT - 1) / dat$N_wks_per_period)),
                                   #kappa = runif(1, 0,1),
                                   v_raw=runif(1,1.5,2.5),
-                                  z=rnorm(TT-min(first) + 1,0,.25),
+                                  z=rnorm(TT - min(first) + 1,0,.25),
                                   mu_log_beta = rnorm(1, 0, .05),
                                   sigma = runif(1, .1, .25),
-                                  sig_beta = runif(1, .02,.08),
-                                  i0_raw = runif(N_C,-9,-7),#rbeta(N_C, 0.01*50, 0.99*50),
+                                  sig_beta = runif(N_C, .02,.08),
+                                  mu_log_e0 = rnorm(1, log(20), 0.25),
+                                  sd_log_e0 = runif(1, 0.2, 0.8),
+                                  z_e0 = rnorm(N_C),
                                   #rho_si = runif(1, 0.0001, 0.005),
-                                  rho_ei_raw = rnorm(1, qlogis(0.2), 0.2),
-                                  rho_ir_raw = runif(1, -0.1, 0.1),
+                                  #rho_ei_raw = rnorm(1, qlogis(0.2), 0.2),
+                                  #rho_ir_raw = runif(1, -0.1, 0.1),
                                   gamma_raw = rnorm(N_C, qlogis(0.75), 0.2),
                                   eta_raw = rnorm(N_C, qlogis(0.75), 0.2))},#rbeta(N_C, 0.5 * 4, 0.5 * 4))},
                  iter_warmup = 500,#1500,
-                 iter_sampling = 500, parallel_chains = 1,
+                 iter_sampling = 500, parallel_chains = 4,
                  output_dir =out_dir,
                  #step_size=.0009
                  )
@@ -152,13 +115,13 @@ fit = tt$sample(data = dat, chains = 1,
 #new_csv1=unlist(1:10 %>% purrr::map(~paste0("./ignore/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v6-202508250811-",.,"-a5dbaf.csv")))
 #new_csv2=unlist(1:10 %>% purrr::map(~paste0("./beta_bin_results/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v2-202504300918-",.,"-56a7f2.csv")))
 
-new_csv=unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
+# new_csv <- unlist(1:4 %>% purrr::map(~paste0("./tst_folder_sig/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10-202511131059-",.,"-3f135e.csv")))
 
 
 
 
 fit$diagnostic_summary()
-fit$summary("p")
+fit$summary(c("eta_p_time", "average_p", "mu_log_e0", "sd_log_e0"))
 
 np_fit <- nuts_params(fit)
 
@@ -168,15 +131,18 @@ np_fit %>%
   group_by(Chain) %>%
   summarize(median_stepsize = median(Value), .groups="drop")
 
-mcmc_pairs(fit$draws(c("p","phi","sigma","sig_beta","rho_ei","obs_cv","i0[1]","i0[2]")), np = np_fit, pars = c("p","sigma","sig_beta","obs_cv","i0[1]","i0[2]"),
+p_reference <- sprintf("p[%d,1]", first[1])
+mcmc_pairs(fit$draws(c("p", "sigma", "sig_beta[1]", "mu_log_e0", "sd_log_e0", "e0[1]")),
+           np = np_fit,
+           pars = c(p_reference, "sigma", "sig_beta[1]", "mu_log_e0", "sd_log_e0", "e0[1]"),
                   off_diag_args = list(size = 0.75))
 
 #fit$output_files()=paste0(getwd(),"/",new_csv)
 
-new_csv=paste0(getwd(),"/tst_folder_sig/","SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v10_neg_bin-202605120836-1-7817cc.csv")
+# To reload a previous v14 Poisson run, set new_csv to one of its output CSV files.
+# new_csv <- paste0(out_dir, "/SEIR_betabin_on_hier_ar1_beta_pbeta_zeros_v14_pois-<timestamp>-1-<id>.csv")
 
-#fit <- read_cmdstan_csv(new_csv)
-fit=as_cmdstan_fit(new_csv)
+# fit <- as_cmdstan_fit(new_csv)
 
 fit_dat=fit$summary()
 fit_dat %>% filter(rhat %in% sort(rhat,decreasing=T)[1:10]) %>% arrange(desc(rhat))
@@ -229,8 +195,8 @@ fit$init() %>% purrr::map(~.$eta[1])
 write.csv(fit$summary(c("p","phi","sigma","sig_beta","rho_ei","rho_ir")) %>% as_tibble %>%
 select(-mad,-ess_bulk) %>% mutate_if(is.numeric,~round(.,3)),file="bin_ests.csv")
 
-fit$summary(c("p","phi","sigma","sig_beta","phi_p","rho_ei","rho_ir"))
-fit$summary(c("phi_p"))
+fit$summary(c("p"))
+fit$summary("e0")
 
 
 
